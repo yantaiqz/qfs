@@ -1,9 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-import io 
-import tempfile # 用于创建临时文件路径
-
-# import os # 不再需要，已删除
 
 # hide_streamlit_ui = """
 # <style>
@@ -68,17 +64,6 @@ SYSTEM_INSTRUCTION = """
 请在所有回复最后注明：“*本回复由AI生成，仅供一般性参考，不构成正式法律意见。重大商业决策请咨询当地持牌律师。*”
 """
 
-RISK_ANALYSIS_PROMPT = """
-请严格扮演“跨境合规专家”，对用户上传的这份合同文件进行以下结构化风险审查，并使用清晰的 Markdown 格式输出报告：
-
-### 📄 合同风险审查报告
-
-1.  **核心风险识别:** 找出并说明本合同中对中国出海企业而言，**前 3 个最高**的法律或商业风险（如管辖权争议、违约金不合理、不可抗力定义过于狭窄等）。
-2.  **管辖权/法律选择:** 明确指出合同中规定的适用的法律和争议解决地。评估这对中国企业的风险等级（高/中/低）。
-3.  **终止与退出机制:** 总结合同的终止条款、提前解除的罚则以及退出机制的公平性。
-4.  **综合风险评级:** 给出简短的“高/中/低”综合风险评级和精炼的处置建议。
-"""
-
 # -------------------------------------------------------------
 # --- 2. 页面配置和模型初始化 (使用缓存和优化模型) ---
 # -------------------------------------------------------------
@@ -124,61 +109,6 @@ st.markdown(
     '<hr style="border-top: 2px dashed #8c8c8c; background: none;">', 
     unsafe_allow_html=True
 )
-
-# --- 合同风险审核工具 ---
-# st.subheader("合同文件风险审核")
-
-uploaded_file = st.file_uploader(
-    "合同文件风险审核", 
-    type=['pdf', 'docx', 'txt'], # 定义支持的文件类型
-    help="Gemini 可以直接读取 PDF 和文本文件进行分析"
-)
-
-# 确保模型定义在前面被正确调用（已在您的代码中实现）
-if uploaded_file and st.button("立即启动风险审查", key="review_start_btn"):
-    
-    # 提取核心数据
-    file_bytes = uploaded_file.getvalue()
-    mime_type = uploaded_file.type
-    file_name = uploaded_file.name
-
-    st.chat_message("user", avatar="👤").write(f"已上传文件: {file_name}，正在请求风险审查。")
-
-    try:
-        with st.spinner(f"正在分析 {file_name} 的 {len(file_bytes)} 字节文件..."):
-            
-            # 1. 构造 Prompt Parts (核心修正在这里！)
-            prompt_parts = [
-                RISK_ANALYSIS_PROMPT,
-                {
-                    # 告知 Gemini 文件的 MIME 类型
-                    "mime_type": mime_type,
-                    # 传入文件的原始字节数据
-                    "data": file_bytes 
-                }
-            ]
-
-            # 2. 调用模型 (流式输出)
-            response_stream = model.generate_content(prompt_parts, stream=True)
-            
-            # 显示并记录助手的流式响应
-            with st.chat_message("assistant", avatar="👩‍💼"):
-                message_placeholder = st.empty()
-                full_review = ""
-                
-                for chunk in response_stream:
-                    if chunk.text:
-                        full_review += chunk.text
-                        message_placeholder.markdown(full_review + "▌")
-                
-                message_placeholder.markdown(full_review)
-                st.session_state.messages.append({"role": "assistant", "content": full_review})
-                
-        st.success("合同审查完成！")
-
-    except Exception as e:
-        st.error(f"处理文件或API调用失败。错误详情: {e}")
-
 
 # 注入一个带有自定义样式的虚线
 st.markdown(
