@@ -60,7 +60,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # 2. 缓存模型初始化（关键性能优化）
-@st.cache_resource(show_spinner="正在建立Judi的专业知识库...")
+@st.cache_resource(show_spinner="正在建立QFS的专业知识库...")
 def initialize_model():
     # 修正模型：升级到 gemini-2.5-flash 以提高可靠性
     # 修正 Token 限制：显式设置高 Token 限制
