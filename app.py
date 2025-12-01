@@ -43,7 +43,7 @@ SYSTEM_INSTRUCTION = """
 # --- 2. 页面配置和模型初始化 (使用缓存和优化模型) ---
 # -------------------------------------------------------------
 
-st.set_page_config(page_title="德国财税专家QFS", page_icon="⚖️")
+st.set_page_config(page_title="德国财税专家QFS", page_icon="🇩🇪")
 st.title("德国合规QFS：查法规、查外企")
 
 # 确保您的聊天历史初始化代码已更新，以便 clear_chat_history 函数可以正常工作。
