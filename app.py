@@ -1,5 +1,4 @@
 import streamlit as st
-import google.generativeai as genai
 import io 
 import tempfile # 用于创建临时文件路径
 
