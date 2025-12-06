@@ -1,5 +1,4 @@
-# qfs
-这是一个为您的 **“德国财税专家 QFS” Streamlit 应用** 生成的 SEO 优化的 Readme 文件。
+# [德国财税专家 QFS](https://qfschina.streamlit.app/) 
 
 该 Readme 重点突出了应用的专业定位（**德国税务、跨境合规**）、核心功能（**AI 专家问答、结构化报告**）和使用的关键技术（**Gemini 2.5 Pro**）。
 
