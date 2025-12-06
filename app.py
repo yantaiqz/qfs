@@ -244,16 +244,16 @@ col_title, col_expert = st.columns([2.5, 1])
 
 with col_title:
     st.title("德国合规QFS：查法规、查外企")
-    st.markdown('<div class="subtitle">德国资深税务师 / 全球跨境合规专家（20年经验）</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">德国资深税务师 / 全球跨境合规专家（20+年经验）</div>', unsafe_allow_html=True)
     st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True) # 增加间隔
 
 with col_expert:
     # 专家图片卡片
     st.markdown(f"""
     <div class="expert-card">
-        <img src="https://example.com/placeholder_expert.jpg" class="profile-img" alt="专家头像">
-        <div class="expert-title">Dr. Hans Müller</div>
-        <div class="expert-role">德国注册税务师 / 跨境法律顾问</div>
+        <img src="https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg" class="profile-img" alt="专家头像">
+        <div class="expert-title">Fei Qiao-Süss</div>
+        <div class="expert-role">德国QFS谦帆思会计税务法律联合事务所首席合伙人、跨境税务专家</div>
     </div>
     """, unsafe_allow_html=True) # ⚠️ 请替换图片 URL 为实际专家图片链接！
 
