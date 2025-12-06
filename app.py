@@ -268,8 +268,8 @@ with col_expert:
     <div class="expert-card">
         <a href="{EXPERT_URL}" class="expert-link" target="_blank">
             <img src="https://example.com/placeholder_expert.jpg" class="profile-img" alt="专家头像">
-            <div class="expert-title">Dr. Hans Müller</div>
-            <div class="expert-role">德国注册税务师 / 跨境法律顾问</div>
+            <div class="expert-title">Fei Qiao-Süss</div>
+            <div class="expert-role">德国QFS谦帆思会计税务法律联合事务所首席合伙人、跨境税务专家</div>
         </a>
     </div>
     """, unsafe_allow_html=True) # ⚠️ 请替换图片 URL 为实际专家图片链接！
