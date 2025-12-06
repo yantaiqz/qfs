@@ -6,12 +6,12 @@ import datetime
 import os
 
 # -------------------------------------------------------------
-# --- 0. 页面配置和全新 CSS 注入 (硅谷简洁风) ---
+# --- 0. 页面配置和全新 CSS 注入 (硅谷简洁风 V2.0) ---
 # -------------------------------------------------------------
 
 st.set_page_config(page_title="德国财税专家QFS", page_icon="🇩🇪", layout="wide")
 
-# 硅谷简洁风格 CSS 注入 (已修改图片大小和卡片样式)
+# 硅谷简洁风格 CSS 注入 (优化间距、阴影、聊天气泡)
 st.markdown("""
 <style>
     /* 1. 彻底隐藏Streamlit默认干扰元素 */
@@ -31,79 +31,96 @@ st.markdown("""
     .main-container {
         max-width: 1000px; /* 限制内容最大宽度，居中 */
         margin: 0 auto;
-        padding: 20px 20px 80px 20px;
+        padding: 24px 20px 80px 20px; /* 顶部和底部增加留白 */
     }
 
-    /* 4. 专家背书卡片 (关键：设置超链接的样式) */
+    /* 4. 专家背书卡片 (强化阴影和圆角) */
     .expert-card {
         background-color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 柔和的阴影 */
-        border: 1px solid #e5e7eb;
-
-        max-width: 250px; /* 限制卡片的宽度 */
-        margin-left: auto; /* 自动外边距左侧 */
-        margin-right: auto; /* 自动外边距右侧，实现卡片在列内居中 */
-  
+        padding: 20px 15px; /* 略微减小左右边距 */
+        border-radius: 16px; /* 更大的圆角 */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); /* 更明显的硅谷风格阴影 */
+        border: none; /* 移除边框，依赖阴影 */
+        max-width: 280px; /* 略微放大卡片宽度 */
+        margin-left: auto;
+        margin-right: auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
     }
     .expert-link {
-        text-decoration: none !important; /* 移除链接的下划线 */
+        text-decoration: none !important;
         color: inherit !important;
         cursor: pointer;
-        transition: opacity 0.2s;
+        transition: transform 0.2s, opacity 0.2s;
     }
     .expert-link:hover {
-        opacity: 0.8; /* 悬停时略微变暗 */
+        transform: translateY(-2px); /* 悬停微动效果 */
+        opacity: 0.95; 
     }
-
 
     /* 5. 专家头像样式 (已放大并支持剪裁) */
     .profile-img {
-        width: 100px; /* 放大头像的显示区域 */
-        height: 100px; /* 放大头像的显示区域 */
+        width: 120px; /* 调整为更平衡的尺寸 */
+        height: 120px; 
         border-radius: 50%;
-        margin-bottom: 8px;
-        border: 4px solid #f9fafb;
-        box-shadow: 0 0 0 3px #d1d5db;
-
-        /* 关键变化：使用背景图片属性 */
-        background-image: url("https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg"); /* ⚠️ 替换为你的实际图片 URL */
-        background-size: cover; /* 确保图片覆盖整个容器，实现放大效果 */
-        background-position: center; /* 确保图片居中显示，实现剪裁中心部分 */
+        margin-bottom: 12px;
+        border: 5px solid #ffffff; /* 白色内边框 */
+        box-shadow: 0 0 0 1px #e5e7eb; /* 外部细边框 */
+        
+        /* 图片来源已更新为实际链接 */
+        background-image: url("https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg"); 
+        background-size: cover;
+        background-position: center;
         background-repeat: no-repeat;
     }
 
-    .expert-title {
-        font-size: 1.2rem; /* 略微放大标题 */
-        font-weight: 700;
-        color: #1f2937;
-        margin-top: 10px;
-    }
-    .expert-role {
-        font-size: 0.9rem; /* 略微放大角色描述 */
-        color: #4b5563;
-    }
-    
     /* 6. 标题和副标题样式 */
     h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
+        font-size: 2.8rem; /* 增大主标题 */
+        font-weight: 900; /* 更粗的字体 */
         color: #1f2937;
         line-height: 1.1;
     }
     .subtitle {
-        font-size: 1rem;
+        font-size: 1.1rem;
         color: #6b7280;
         margin-top: -10px;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
+        font-weight: 400;
+    }
+
+    /* 7. 聊天消息气泡优化 */
+    .stChatMessage {
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 消息气泡轻微阴影 */
+    }
+    /* 调整助手气泡颜色 */
+    [data-testid="stChatMessage"]:nth-child(odd) > div:nth-child(2) {
+        background-color: #f3f4f6; /* 助手气泡使用浅灰色背景 */
+        border-radius: 12px;
     }
     
-    /* 7. 聊天容器和输入框优化 */
+    /* 8. 常见问题按钮样式 - 更现代的圆角和点击效果 */
+    div.stButton > button {
+        background-color: #ffffff;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+        border-radius: 8px; 
+        font-weight: 600; /* 略微加粗 */
+        padding: 0.6rem 1rem;
+        box-shadow: none;
+    }
+    div.stButton > button:hover {
+        background-color: #eff6ff; /* 悬停时淡蓝色背景 */
+        border-color: #3b82f6;
+        color: #1d4ed8;
+    }
+    
+    /* 9. 底部固定输入框样式 (保持不变) */
     [data-testid="stChatInput"] {
         position: fixed;
         bottom: 0;
@@ -116,55 +133,23 @@ st.markdown("""
         max-width: 1000px; 
         margin: 0 auto;
     }
-    .stChatMessage {
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 10px;
-    }
-    
-    /* 8. 常见问题按钮样式 */
-    div.stButton > button {
-        background-color: #ffffff;
-        color: #4b5563;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        box-shadow: none;
-        transition: all 0.2s;
-    }
-    div.stButton > button:hover {
-        background-color: #f3f4f6;
-        border-color: #9ca3af;
-    }
-    
-    /* 9. 访问统计样式 */
-    .visit-stats {
-        font-size: 0.75rem;
-        color: #9ca3af;
-        text-align: center;
-        margin-top: 10px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # -------------------------------------------------------------
-# --- 1. 常量定义、系统指令和模型配置 ---
+# --- 1. 常量定义、系统指令和模型配置 (保持不变) ---
 # -------------------------------------------------------------
 
-# 定义头像常量
 USER_ICON = "👤"
 ASSISTANT_ICON = "👩‍💼"
 
-# 定义常见法律问题
 COMMON_LEGAL_QUESTIONS = [
     "怎么应对税务稽查？",
     "货物出口德国如何判断增值税地点？",
     "企业在德国做重组，怎么做税务优化"
 ]
 
-# 定义律师角色 (SYSTEM_INSTRUCTION)
 SYSTEM_INSTRUCTION = """
 角色： 德国资深税务师 / 全球跨境合规专家与涉外律师（20年经验）
 服务对象： 中国出海企业
@@ -269,30 +254,27 @@ col_title, col_expert = st.columns([2.5, 1])
 EXPERT_URL = "https://www.qfs-tax.de/Aboutinfo_2.html"
 
 with col_title:
-    st.title("德国合规QFS：查法规、查外企")
-    st.markdown('<div class="subtitle">德国资深税务师 / 全球跨境合规专家（20年经验）</div>', unsafe_allow_html=True)
-    st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True) # 增加间隔
+    st.title("🇩🇪 德国合规QFS")
+    st.markdown('<div class="subtitle">资深税务师 / 全球跨境专家 AI 咨询服务</div>', unsafe_allow_html=True) # 简化副标题
+    st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True) 
 
 with col_expert:
-    # 专家超链接目标 URL
-    EXPERT_URL = "https://www.qfs-tax.de/Aboutinfo_2.html" 
-
     # 专家图片卡片 (将 img 替换为 div)
     st.markdown(f"""
     <div class="expert-card">
         <a href="{EXPERT_URL}" class="expert-link" target="_blank">
             <div class="profile-img" alt="专家头像"></div> 
-            <div class="expert-title">Fei Qiao-Süss</div>
-            <div class="expert-role">德国QFS谦帆思会计税务法律联合事务所首席合伙人、跨境税务专家</div>
+            <div class="expert-title">乔斐·苏斯 (Fei Qiao-Süss)</div>
+            <div class="expert-role">QFS谦帆思联合事务所 | 首席合伙人</div>
         </a>
     </div>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True) 
 
 
 # --- 4. 常见问题按钮逻辑 ---
 
 prompt_from_button = None
-st.subheader("常见问题快速查询")
+st.subheader("💡 常见问题快速查询")
 
 # 优化为 3 列布局
 cols = st.columns(3)
@@ -309,7 +291,6 @@ st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
 # 1. 显示历史消息 
 for msg in st.session_state.messages:
     icon = USER_ICON if msg["role"] == "user" else ASSISTANT_ICON
-    # 使用 st.chat_message 默认的 Streamlit 样式，但已通过 CSS 优化了圆角和间距
     st.chat_message(msg["role"], avatar=icon).write(msg["content"])
 
 # 2. 获取输入（注意：输入框被 CSS 移动到了屏幕底部）
