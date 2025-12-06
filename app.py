@@ -34,8 +34,6 @@ st.markdown("""
         padding: 20px 20px 80px 20px;
     }
 
-    
-
     /* 4. 专家背书卡片 (关键：设置超链接的样式) */
     .expert-card {
         background-color: white;
@@ -61,8 +59,8 @@ st.markdown("""
 
     /* 5. 专家头像样式 (已放大并支持剪裁) */
     .profile-img {
-        width: 150px; /* 放大头像的显示区域 */
-        height: 150px; /* 放大头像的显示区域 */
+        width: 100px; /* 放大头像的显示区域 */
+        height: 100px; /* 放大头像的显示区域 */
         border-radius: 50%;
         margin-bottom: 8px;
         border: 4px solid #f9fafb;
