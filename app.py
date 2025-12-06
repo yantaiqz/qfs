@@ -58,15 +58,21 @@ st.markdown("""
         opacity: 0.8; /* 悬停时略微变暗 */
     }
 
-   /* 5. 专家头像样式 (已放大) */
+
+    /* 5. 专家头像样式 (已放大并支持剪裁) */
     .profile-img {
-        width: 100px; /* 放大头像 */
-        height: 100px; /* 放大头像 */
+        width: 150px; /* 放大头像的显示区域 */
+        height: 150px; /* 放大头像的显示区域 */
         border-radius: 50%;
-        object-fit: cover;
+        margin-bottom: 8px;
         border: 4px solid #f9fafb;
-        box-shadow: 0 0 0 2px #d1d5db;
-        margin-bottom: 5px; /* 图片与文字间距 */
+        box-shadow: 0 0 0 3px #d1d5db;
+
+        /* 关键变化：使用背景图片属性 */
+        background-image: url("https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg"); /* ⚠️ 替换为你的实际图片 URL */
+        background-size: cover; /* 确保图片覆盖整个容器，实现放大效果 */
+        background-position: center; /* 确保图片居中显示，实现剪裁中心部分 */
+        background-repeat: no-repeat;
     }
 
     .expert-title {
@@ -265,16 +271,20 @@ with col_title:
     st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True) # 增加间隔
 
 with col_expert:
-    # 专家图片卡片 (整个卡片内容包裹在<a>标签内)
+    # 专家超链接目标 URL
+    EXPERT_URL = "https://www.qfs-tax.de/Aboutinfo_2.html" 
+
+    # 专家图片卡片 (将 img 替换为 div)
     st.markdown(f"""
     <div class="expert-card">
         <a href="{EXPERT_URL}" class="expert-link" target="_blank">
-            <img src="https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg" class="profile-img" alt="专家头像">
+            <div class="profile-img" alt="专家头像"></div> 
             <div class="expert-title">Fei Qiao-Süss</div>
             <div class="expert-role">德国QFS谦帆思会计税务法律联合事务所首席合伙人、跨境税务专家</div>
         </a>
     </div>
-    """, unsafe_allow_html=True) # ⚠️ 请替换图片 URL 为实际专家图片链接！
+    """, unsafe_allow_html=True)
+
 
 # --- 4. 常见问题按钮逻辑 ---
 
