@@ -41,6 +41,11 @@ st.markdown("""
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 柔和的阴影 */
         border: 1px solid #e5e7eb;
+
+        max-width: 250px; /* 限制卡片的宽度 */
+        margin-left: auto; /* 自动外边距左侧 */
+        margin-right: auto; /* 自动外边距右侧，实现卡片在列内居中 */
+  
         display: flex;
         flex-direction: column;
         align-items: center;
