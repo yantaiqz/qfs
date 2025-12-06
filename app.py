@@ -58,30 +58,28 @@ st.markdown("""
         opacity: 0.8; /* 悬停时略微变暗 */
     }
 
-    
-    /* 5. 专家头像样式 (已放大) */
+   /* 5. 专家头像样式 (已放大) */
     .profile-img {
-        width: 150px; /* 放大头像，例如从 100px 增至 150px */
-        height: 150px; /* 放大头像 */
+        width: 100px; /* 放大头像 */
+        height: 100px; /* 放大头像 */
         border-radius: 50%;
         object-fit: cover;
         border: 4px solid #f9fafb;
-        box-shadow: 0 0 0 3px #d1d5db; /* 略微增粗边框阴影 */
-        margin-bottom: 8px; /* 增大图片与文字间距 */
+        box-shadow: 0 0 0 2px #d1d5db;
+        margin-bottom: 5px; /* 图片与文字间距 */
     }
 
     .expert-title {
-        font-size: 1.4rem; /* 略微放大标题 */
+        font-size: 1.2rem; /* 略微放大标题 */
         font-weight: 700;
         color: #1f2937;
         margin-top: 10px;
     }
     .expert-role {
-        font-size: 1.0rem; /* 略微放大角色描述 */
+        font-size: 0.9rem; /* 略微放大角色描述 */
         color: #4b5563;
-        margin-bottom: 5px; /* 确保底部有间距 */
     }
-
+    
     /* 6. 标题和副标题样式 */
     h1 {
         font-size: 2.5rem;
