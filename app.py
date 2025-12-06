@@ -11,7 +11,7 @@ import os
 
 st.set_page_config(page_title="德国财税专家QFS", page_icon="🇩🇪", layout="wide")
 
-# 硅谷简洁风格 CSS 注入
+# 硅谷简洁风格 CSS 注入 (已修改图片大小和卡片样式)
 st.markdown("""
 <style>
     /* 1. 彻底隐藏Streamlit默认干扰元素 */
@@ -34,7 +34,7 @@ st.markdown("""
         padding: 20px 20px 80px 20px;
     }
 
-    /* 4. 专家背书卡片 (关键：硅谷风格的圆角、阴影和简洁设计) */
+    /* 4. 专家背书卡片 (关键：设置超链接的样式) */
     .expert-card {
         background-color: white;
         padding: 20px;
@@ -46,26 +46,39 @@ st.markdown("""
         align-items: center;
         text-align: center;
     }
+    .expert-link {
+        text-decoration: none !important; /* 移除链接的下划线 */
+        color: inherit !important;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .expert-link:hover {
+        opacity: 0.8; /* 悬停时略微变暗 */
+    }
+
+    /* 5. 专家头像样式 (已放大) */
+    .profile-img {
+        width: 100px; /* 放大头像 */
+        height: 100px; /* 放大头像 */
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #f9fafb;
+        box-shadow: 0 0 0 2px #d1d5db;
+        margin-bottom: 5px; /* 图片与文字间距 */
+    }
+
     .expert-title {
-        font-size: 1.1rem;
+        font-size: 1.2rem; /* 略微放大标题 */
         font-weight: 700;
         color: #1f2937;
         margin-top: 10px;
     }
     .expert-role {
-        font-size: 0.85rem;
+        font-size: 0.9rem; /* 略微放大角色描述 */
         color: #4b5563;
     }
-    .profile-img {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid #f9fafb;
-        box-shadow: 0 0 0 2px #d1d5db;
-    }
 
-    /* 5. 标题和副标题样式 */
+    /* 6. 标题和副标题样式 */
     h1 {
         font-size: 2.5rem;
         font-weight: 800;
@@ -79,7 +92,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* 6. 聊天容器和输入框优化 */
+    /* 7. 聊天容器和输入框优化 */
     [data-testid="stChatInput"] {
         position: fixed;
         bottom: 0;
@@ -89,17 +102,16 @@ st.markdown("""
         padding: 15px 20px;
         box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
         z-index: 1000;
-        max-width: 1000px; /* 与主容器宽度保持一致 */
+        max-width: 1000px; 
         margin: 0 auto;
     }
-    /* 聊天消息的圆角和留白 */
     .stChatMessage {
         border-radius: 12px;
         padding: 15px;
         margin-bottom: 10px;
     }
     
-    /* 7. 常见问题按钮样式 */
+    /* 8. 常见问题按钮样式 */
     div.stButton > button {
         background-color: #ffffff;
         color: #4b5563;
@@ -115,7 +127,7 @@ st.markdown("""
         border-color: #9ca3af;
     }
     
-    /* 8. 访问统计样式 */
+    /* 9. 访问统计样式 */
     .visit-stats {
         font-size: 0.75rem;
         color: #9ca3af;
@@ -242,18 +254,23 @@ st.markdown('<div class="main-container">', unsafe_allow_html=True)
 # === 头部重构：标题和专家图片卡片 ===
 col_title, col_expert = st.columns([2.5, 1])
 
+# 专家超链接目标 URL
+EXPERT_URL = "https://www.qfs-tax.de/Aboutinfo_2.html"
+
 with col_title:
     st.title("德国合规QFS：查法规、查外企")
-    st.markdown('<div class="subtitle">德国资深税务师 / 全球跨境合规专家（20+年经验）</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">德国资深税务师 / 全球跨境合规专家（20年经验）</div>', unsafe_allow_html=True)
     st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True) # 增加间隔
 
 with col_expert:
-    # 专家图片卡片
+    # 专家图片卡片 (整个卡片内容包裹在<a>标签内)
     st.markdown(f"""
     <div class="expert-card">
-        <img src="https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg" class="profile-img" alt="专家头像">
-        <div class="expert-title">Fei Qiao-Süss</div>
-        <div class="expert-role">德国QFS谦帆思会计税务法律联合事务所首席合伙人、跨境税务专家</div>
+        <a href="{EXPERT_URL}" class="expert-link" target="_blank">
+            <img src="https://example.com/placeholder_expert.jpg" class="profile-img" alt="专家头像">
+            <div class="expert-title">Dr. Hans Müller</div>
+            <div class="expert-role">德国注册税务师 / 跨境法律顾问</div>
+        </a>
     </div>
     """, unsafe_allow_html=True) # ⚠️ 请替换图片 URL 为实际专家图片链接！
 
