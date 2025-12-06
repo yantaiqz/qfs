@@ -267,7 +267,7 @@ with col_expert:
     st.markdown(f"""
     <div class="expert-card">
         <a href="{EXPERT_URL}" class="expert-link" target="_blank">
-            <img src="https://example.com/placeholder_expert.jpg" class="profile-img" alt="专家头像">
+            <img src="https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg" class="profile-img" alt="专家头像">
             <div class="expert-title">Fei Qiao-Süss</div>
             <div class="expert-role">德国QFS谦帆思会计税务法律联合事务所首席合伙人、跨境税务专家</div>
         </a>
