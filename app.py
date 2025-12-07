@@ -407,7 +407,7 @@ if user_input:
         <br>详细信息: {str(e)[:100]}...
         """, unsafe_allow_html=True)
 
-col_clear = st.columns([1, 1])
+col_clear = st.columns([1])[0]
 with col_clear:
     # 清空聊天记录按钮
     if st.button('🧹 清空聊天记录', help="清除所有历史对话", key="clear_btn", 
