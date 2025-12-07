@@ -207,6 +207,15 @@ st.markdown("""
             background: transparent !important;
         }
     }
+    
+    /* 在 CSS 中新增置顶访问统计的样式 */
+    .visit-stats-top {
+        color: #9ca3af; /* 浅灰色，弱化视觉 */
+        font-size: 0.75rem; /* 小号字体 */
+        text-align: right; /* 靠右对齐，不抢焦点 */
+        margin-bottom: 16px; /* 与标题保持少量间距 */
+        line-height: 1; /* 紧凑行高，减少占空 */
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -322,6 +331,13 @@ if "messages" not in st.session_state:
 # 将所有内容包裹在主容器内
 st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
+# === 置顶的访问统计 (核心修改：移到最顶部 + 弱化样式) ===
+st.markdown(f"""
+<div class="visit-stats-top">
+    {visit_text}
+</div>
+""", unsafe_allow_html=True)
+
 # === 头部区域：标题 + 专家卡片 (优化响应式布局) ===
 col_title, col_expert = st.columns([3, 1], gap="large")
 
@@ -391,10 +407,6 @@ if user_input:
         <br>详细信息: {str(e)[:100]}...
         """, unsafe_allow_html=True)
 
-# === 底部控制区域 (清空按钮 + 访问统计) ===
-st.markdown('<div class="control-area">', unsafe_allow_html=True)
-col_clear, col_stats = st.columns([1, 1])
-
 with col_clear:
     # 清空聊天记录按钮
     if st.button('🧹 清空聊天记录', help="清除所有历史对话", key="clear_btn", 
@@ -404,9 +416,6 @@ with col_clear:
             {"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}
         ]
         st.rerun()
-
-with col_stats:
-    st.markdown(f'<div class="visit-stats">{visit_text}</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)  # 闭合控制区域
 
