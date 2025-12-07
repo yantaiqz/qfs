@@ -19,20 +19,20 @@ st.markdown("""
         display: none !important;
     }
     
-    /* 2. 全局容器调整 (优化响应式) */
+    /* 2. 全局容器调整 (移除底部留白，适配无白色底部) */
     .stApp {
-        background-color: #f8fafc; /* 柔和的浅灰色背景 */
+        background-color: #f8fafc; /* 保持背景色一致 */
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         padding: 0;
         margin: 0;
     }
 
-    /* 3. 主容器 (精准控制宽度和响应式) */
+    /* 3. 主容器 (关键：移除底部超大留白，适配输入框悬浮) */
     .main-container {
-        max-width: 1200px; /* 放宽最大宽度，适配大屏 */
+        max-width: 1200px;
         width: 100%;
         margin: 0 auto;
-        padding: 32px 24px 90px 24px; /* 优化上下留白，适配底部输入框 */
+        padding: 32px 24px 20px 24px; /* 底部留白从90px减到20px */
         box-sizing: border-box;
     }
 
@@ -165,81 +165,46 @@ st.markdown("""
         transform: translateY(0);
     }
     
-    /* 10. 底部固定输入框样式 (优化适配) */
+    /* 10. 底部输入框样式 (核心修改：去掉白色背景，融入全局) */
     [data-testid="stChatInput"] {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background: white;
-        padding: 20px 24px;
-        box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+        background: transparent !important; /* 去掉白色背景 */
+        padding: 16px 24px 20px 24px; /* 调整内边距 */
+        box-shadow: none !important; /* 去掉阴影 */
         z-index: 1000;
         max-width: 1200px; 
         margin: 0 auto;
         width: 100%;
         box-sizing: border-box;
     }
-    /* 输入框内部样式优化 */
+    /* 输入框内部样式 (适配透明背景) */
     [data-testid="stChatInput"] textarea {
         border-radius: 12px !important;
         border: 1px solid #e5e7eb !important;
         padding: 12px 16px !important;
         font-size: 1rem !important;
+        background-color: white !important; /* 仅输入框本身保留白色，保证可读性 */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* 11. 清空按钮和统计区域 */
+    /* 11. 清空按钮和统计区域 (去掉边框/留白，融入背景) */
     .control-area {
         margin-top: 24px;
         padding-top: 16px;
-        border-top: 1px solid #f0f0f0;
-    }
-    .visit-stats {
-        color: #6b7280;
-        font-size: 0.9rem;
-        text-align: right;
-        padding-top: 4px;
-    }
-    .clear-btn {
-        background-color: #f9fafb !important;
-        color: #4b5563 !important;
-        border-color: #d1d5db !important;
-        width: auto !important;
-        padding: 0.5rem 1rem !important;
-        font-size: 0.85rem !important;
-    }
-    .clear-btn:hover {
-        background-color: #f3f4f6 !important;
-        border-color: #9ca3af !important;
+        border-top: none !important; /* 去掉顶部边框 */
     }
 
-    /* 12. 响应式适配 (移动端优化) */
+    /* 响应式适配 (同步修改移动端) */
     @media (max-width: 768px) {
         .main-container {
-            padding: 24px 16px 80px 16px;
-        }
-        .expert-card {
-            max-width: 100%;
-            margin-top: 24px;
-        }
-        .faq-header {
-            margin: 32px 0 12px 0;
+            padding: 24px 16px 20px 16px; /* 移动端底部留白也减少 */
         }
         [data-testid="stChatInput"] {
-            padding: 16px 16px;
-        }
-        [data-testid="stChatMessage"] img {
-            width: 32px !important;
-            height: 32px !important;
-        }
-    }
-    @media (max-width: 576px) {
-        .page-title {
-            font-size: 1.8rem;
-        }
-        .profile-img {
-            width: 100px;
-            height: 100px;
+            padding: 16px 16px 20px 16px;
+            background: transparent !important;
         }
     }
 </style>
@@ -336,7 +301,7 @@ def initialize_model():
     }
     
     model = genai.GenerativeModel(
-        model_name='gemini-2.5-pro', 
+        model_name='gemini-2.5-flash', 
         system_instruction=SYSTEM_INSTRUCTION,
         generation_config=generation_config
     )
