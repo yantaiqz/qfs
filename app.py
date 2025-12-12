@@ -247,7 +247,7 @@ SYSTEM_INSTRUCTION = """
 """
 
 # -------------------------- 2. 安全的计数器逻辑 --------------------------
-COUNTER_FILE = "visit_stats.json"
+COUNTER_FILE = "visit_stats_qfs.json"
 
 def update_daily_visits():
     """安全更新访问量，如果出错则返回 0，绝不让程序崩溃"""
@@ -310,8 +310,8 @@ def initialize_model():
     }
     
     model = genai.GenerativeModel(
-        # model_name='gemini-2.5-flash', 
-        model_name='gemini-2.5-pro', 
+        model_name='gemini-2.5-flash', 
+        #  model_name='gemini-2.5-pro', 
         system_instruction=SYSTEM_INSTRUCTION,
         generation_config=generation_config
     )
