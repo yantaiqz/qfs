@@ -1,2 +1,5 @@
 streamlit
 google-generativeai
+streamlit>=1.28.0
+volcengine>=1.0.0  # 火山引擎基础SDK
+volcengine-ark>=0.1.0  # 方舟大模型专属SDK（若需要）
