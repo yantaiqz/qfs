@@ -403,9 +403,9 @@ if user_input:
     
     except Exception as e:
         st.error(f"""
-        发生错误: 调用Gemini API失败
-        <br>请检查：1. API Key 是否有效 2. 配额是否充足
-        <br>详细信息: {str(e)[:100]}...
+发生错误: 调用Gemini API失败
+<br>请检查：1. API Key 是否有效 2. 配额是否充足
+<br>详细信息: {str(e)[:100]}...
         """, unsafe_allow_html=True)
 
 col_clear = st.columns([1])[0]
