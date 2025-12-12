@@ -403,11 +403,20 @@ if user_input:
             st.session_state.messages.append({"role": "assistant", "content": full_response})
     
     except Exception as e:
-        st.error(f"""
-发生错误: 调用Gemini API失败
-<br>请检查：1. API Key 是否有效 2. 配额是否充足
-<br>详细信息: {str(e)[:100]}...
-        """, unsafe_allow_html=True)
+        st.markdown(f"""
+    <div style="
+        background-color: #fef2f2; 
+        color: #dc2626; 
+        padding: 1rem; 
+        border-radius: 0.5rem; 
+        border-left: 4px solid #dc2626;
+        margin: 0.5rem 0;
+    ">
+        发生错误: 调用Gemini API失败<br>
+        请检查：1. API Key 是否有效 2. 配额是否充足<br>
+        详细信息: {str(e)[:100]}...
+    </div>
+    """, unsafe_allow_html=True)
 
 col_clear = st.columns([1])[0]
 with col_clear:
