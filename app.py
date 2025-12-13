@@ -5,6 +5,7 @@ import json
 import datetime
 import os
 import time
+import re  # 新增：用于清理冗余换行
 
 # -------------------------------------------------------------
 # --- 0. 页面配置和 CSS 注入 (Kimi风格 + 无顶部空白 + 上下排列) ---
@@ -17,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Kimi风格 CSS 注入（核心优化）
+# Kimi风格 CSS 注入（核心优化：解决空白行、优化排版）
 st.markdown("""
 <style>
     /* 1. 彻底移除所有默认空白和边距 */
@@ -161,7 +162,7 @@ st.markdown("""
     }
     .model-card {
         background-color: white !important;
-        padding: 20px !important;
+        padding: 16px 20px !important; /* 减少内边距，避免空白 */
         border-radius: 12px !important;
         border: 1px solid #e8e8e8 !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
@@ -182,12 +183,12 @@ st.markdown("""
     }
     .model-card-content {
         font-size: 0.95rem !important;
-        line-height: 1.6 !important;
+        line-height: 1.5 !important; /* 优化行高，减少空白 */
         color: #2d3748 !important;
         white-space: pre-wrap !important;
     }
 
-    /* 10. 语义总结卡片（Kimi风格） */
+    /* 10. 语义总结卡片（Kimi风格 + 解决空白行） */
     .semantic-compare-header {
         font-size: 1.1rem !important;
         font-weight: 600 !important;
@@ -196,15 +197,24 @@ st.markdown("""
     }
     .semantic-card {
         background-color: #f0f8fb !important;
-        padding: 20px !important;
+        padding: 16px 20px !important; /* 减少内边距 */
         border-radius: 12px !important;
         border: 1px solid #e3f2fd !important;
         margin-bottom: 16px !important;
     }
     .semantic-content {
         color: #2d3748 !important;
-        line-height: 1.6 !important;
+        line-height: 1.5 !important; /* 优化行高 */
         font-size: 0.95rem !important;
+    }
+    /* 关键：控制换行间距，解决空白行 */
+    .semantic-content br, .model-card-content br {
+        line-height: 1.2 !important;
+        margin: 2px 0 !important;
+    }
+    p {
+        margin: 4px 0 !important;
+        padding: 0 !important;
     }
 
     /* 11. 访问统计（隐藏，简化界面） */
@@ -231,6 +241,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
+# --- 工具函数：清理冗余换行/空格 ---
+# -------------------------------------------------------------
+def clean_extra_newlines(text):
+    """合并连续换行符为单个，清理冗余空格/制表符，保留结构"""
+    # 合并2个及以上换行符为1个
+    cleaned = re.sub(r'\n{2,}', '\n', text)
+    # 移除全角空格
+    cleaned = re.sub(r'　+', '', cleaned)
+    # 移除制表符
+    cleaned = re.sub(r'\t+', '', cleaned)
+    # 移除开头/结尾的空换行
+    cleaned = cleaned.strip('\n')
+    # 确保列表前只有一个换行
+    cleaned = re.sub(r'\n+(- )', '\n- ', cleaned)
+    return cleaned
+
+# -------------------------------------------------------------
 # --- 1. 常量定义与基础配置 ---
 # -------------------------------------------------------------
 
@@ -245,6 +272,7 @@ COMMON_LEGAL_QUESTIONS = [
     "企业在德国做重组，怎么做税务优化"
 ]
 
+# 优化后的系统指令：要求详细输出+减少冗余换行
 SYSTEM_INSTRUCTION = """
 角色： 德国资深税务师 / 全球跨境合规专家与涉外律师（20年经验）
 服务对象： 中国出海企业
@@ -253,9 +281,10 @@ SYSTEM_INSTRUCTION = """
 1. 企业资质评估：启用【企业资信评估报告】结构化输出。
 2. 专业语气：启用客观、中立、严谨的法律专业人士语气。
 3. 地域精准：回答基于德国国家/地区的现行法律法规。
-4. 结构化输出：启用“核心风险点”、“法律依据”、“合规建议”分层结构。
+4. 结构化输出：启用“核心风险点”、“法律依据”、“合规建议”分层结构，内容详细且完整。
 5. 强制数据来源：启用【数据来源/法律依据】章节。
-6. 强制免责声明：所有回复末尾强制包含免责声明。
+6. 强制免责声明：回复末尾包含简明免责声明（不超过50字）。
+7. 排版要求：使用单个换行分隔段落/分点，禁止使用多个连续换行、全角空格或制表符。
 """
 
 # -------------------------- 访问计数器 --------------------------
@@ -302,7 +331,7 @@ visit_text = f"今日访问: {daily_visits}"
 
 # 2.1 Gemini 流式输出函数
 def stream_gemini_response(prompt, model):
-    """Gemini 流式输出生成器"""
+    """Gemini 流式输出生成器（优化：减少换行）"""
     try:
         stream = model.generate_content(prompt, stream=True)
         for chunk in stream:
@@ -314,7 +343,7 @@ def stream_gemini_response(prompt, model):
 
 # 2.2 智谱GLM 流式输出函数
 def stream_glm_response(prompt, api_key, model_name="glm-4"):
-    """智谱GLM 流式输出生成器"""
+    """智谱GLM 流式输出生成器（优化：减少换行）"""
     if not api_key:
         yield "⚠️ 未配置智谱GLM API Key，暂无法获取该模型分析结果。"
         return
@@ -327,8 +356,10 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
             "Authorization": f"Bearer {api_key}"
         }
         
+        # 优化prompt：要求详细输出+减少冗余换行
         full_prompt = f"""{SYSTEM_INSTRUCTION}
-        用户问题：{prompt}"""
+        用户问题：{prompt}
+        额外要求：回答内容详细完整，使用单个换行分隔分点/段落，禁止多个连续换行，总长度不少于500字。"""
         
         data = {
             "model": model_name,
@@ -363,35 +394,36 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
     except Exception as e:
         yield f"\n\n⚠️ 智谱GLM处理失败：{str(e)[:100]}..."
 
-# 2.3 语义对比总结函数（修复参数错误）
+# 2.3 语义对比总结函数（解决截断+空白行）
 def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
-    """生成语义层面的异同总结"""
+    """生成语义层面的异同总结（提升token上限+放宽约束）"""
     compare_prompt = f"""
     请作为专业的德国财税分析专家，对比以下两个AI模型针对"{user_question}"的回答，从**语义层面**总结它们的异同：
     
     ### 对比要求：
-    1. 相同点：总结核心法律观点、适用法条、风险判断等方面的共识
-    2. 不同点：分析在分析角度、建议侧重点、法条解读深度、实操性等方面的差异
+    1. 相同点：总结核心法律观点、适用法条、风险判断等方面的共识（3-5条）
+    2. 不同点：详细分析两个模型在分析角度、建议侧重点、法条解读深度、实操性等方面的差异
     3. 避免逐字逐句对比，聚焦核心语义和逻辑层面
-    4. 语言简洁、专业，符合财税咨询场景，每条要点不超过20字
+    4. 语言简洁、专业，符合财税咨询场景，禁止使用多个连续换行
     
     ### Gemini回答：
-    {gemini_resp[:1500]}
+    {gemini_resp[:2000]}  # 提升截断长度，确保素材充足
     
     ### 智谱GLM回答：
-    {glm_resp[:1500]}
+    {glm_resp[:2000]}
     
-    ### 输出格式（严格遵守）：
+    ### 输出格式（严格遵守，内容完整）：
     **【核心共识】**
     - 要点1
     - 要点2
+    - 要点3
     
     **【观点差异】**
-    - Gemini：侧重xxx，分析角度xxx
-    - 智谱GLM：侧重xxx，分析角度xxx
+    - Gemini：侧重的分析角度、建议侧重点、优势与不足
+    - 智谱GLM：侧重的分析角度、建议侧重点、优势与不足
     
     **【综合建议】**
-    结合两个模型的分析，给用户的最优行动建议（不超过50字）
+    结合两个模型的分析，给用户的具体、可落地的最优行动建议（不少于50字）
     """
     
     try:
@@ -400,7 +432,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
             model_name='gemini-flash-latest',
             generation_config={
                 "temperature": 0.1, 
-                "max_output_tokens": 2000,
+                "max_output_tokens": 3000,  # 大幅提升token上限，避免截断
                 "top_p": 0.95
             }
         )
@@ -408,21 +440,23 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.02)
+                time.sleep(0.02)  # 缩短等待，减少超时
     except Exception as e:
+        # 精准提示错误+完整降级模板
         st.error(f"语义总结生成失败：{str(e)}")
         print(f"语义总结错误详情：{e}")
         yield f"""
 **【核心共识】**
-- 均认可{user_question}相关德国财税法规的核心原则
-- 均强调该场景下合规操作和风险防控的必要性
+- 均认可{user_question}相关德国财税法规的核心适用原则
+- 均强调该场景下合规操作的重要性和风险防控的必要性
+- 均认为专业的税务合规文件准备是核心要务
 
 **【观点差异】**
-- Gemini：侧重{user_question}法条的字面解读与国际通用性
-- 智谱GLM：侧重{user_question}的实操落地与本土化建议
+- Gemini：侧重{user_question}相关法条的字面解读、国际通用性和合规框架搭建
+- 智谱GLM：侧重{user_question}场景下中国企业的实操落地、本土化适配和流程简化
 
 **【综合建议】**
-针对{user_question}，兼顾德国法条合规性与中企实操落地需求
+针对{user_question}问题，建议结合Gemini的合规框架和智谱GLM的实操建议，先确保符合德国财税法规的核心要求，再根据中企出海的实际场景优化落地流程，必要时咨询当地专业税务师。
 """
 
 # -------------------------------------------------------------
@@ -482,7 +516,7 @@ if "model_responses" not in st.session_state:
     st.session_state.model_responses = {}
 
 # -------------------------------------------------------------
-# --- 4. 主程序入口 (Kimi风格 + 上下排列) ---
+# --- 4. 主程序入口 (Kimi风格 + 上下排列 + 无空白行) ---
 # -------------------------------------------------------------
 
 # 主容器
@@ -519,7 +553,7 @@ for msg in st.session_state.messages:
 chat_input_text = st.chat_input("请输入你的合规问题...")
 user_input = prompt_from_button if prompt_from_button else chat_input_text
 
-# 处理用户输入（核心：上下排列）
+# 处理用户输入（核心：上下排列 + 解决空白行/截断）
 if user_input and st.session_state.get("api_configured", False):
     # 显示用户消息
     st.chat_message("user", avatar=USER_ICON).write(user_input)
@@ -543,25 +577,30 @@ if user_input and st.session_state.get("api_configured", False):
     gemini_full_response = ""
     for chunk in stream_gemini_response(user_input, gemini_model):
         gemini_full_response += chunk
+        # 清理冗余换行 + 渲染
+        cleaned_gemini = clean_extra_newlines(gemini_full_response)
+        display_gemini = cleaned_gemini.replace("\n", "<br>")
         gemini_placeholder.markdown(f"""
         <div class="model-card">
             <div class="model-card-header gemini-header">
                 {GEMINI_ICON} Gemini Flash (正在生成...)
             </div>
             <div class="model-card-content">
-                {gemini_full_response}▌
+                {display_gemini}▌
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    # 最终渲染Gemini
+    # 最终渲染Gemini（清理空白行）
+    final_gemini = clean_extra_newlines(gemini_full_response)
+    final_display_gemini = final_gemini.replace("\n", "<br>")
     gemini_placeholder.markdown(f"""
     <div class="model-card">
         <div class="model-card-header gemini-header">
             {GEMINI_ICON} Gemini Flash
         </div>
         <div class="model-card-content">
-            {gemini_full_response}
+            {final_display_gemini}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -581,25 +620,30 @@ if user_input and st.session_state.get("api_configured", False):
     glm_full_response = ""
     for chunk in stream_glm_response(user_input, glm_api_key):
         glm_full_response += chunk
+        # 清理冗余换行 + 渲染
+        cleaned_glm = clean_extra_newlines(glm_full_response)
+        display_glm = cleaned_glm.replace("\n", "<br>")
         glm_placeholder.markdown(f"""
         <div class="model-card">
             <div class="model-card-header glm-header">
                 {GLM_ICON} 智谱GLM-4 (正在生成...)
             </div>
             <div class="model-card-content">
-                {glm_full_response}▌
+                {display_glm}▌
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    # 最终渲染GLM
+    # 最终渲染GLM（清理空白行）
+    final_glm = clean_extra_newlines(glm_full_response)
+    final_display_glm = final_glm.replace("\n", "<br>")
     glm_placeholder.markdown(f"""
     <div class="model-card">
         <div class="model-card-header glm-header">
             {GLM_ICON} 智谱GLM-4
         </div>
         <div class="model-card-content">
-            {glm_full_response}
+            {final_display_glm}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -610,27 +654,32 @@ if user_input and st.session_state.get("api_configured", False):
         "glm": glm_full_response
     }
     
-    # === 3. 语义对比 流式输出 ===
+    # === 3. 语义对比 流式输出（解决截断+空白行） ===
     st.markdown('<div class="semantic-compare-header">📊 语义层面异同分析</div>', unsafe_allow_html=True)
     semantic_placeholder = st.empty()
     semantic_full_response = ""
     
-    # 流式生成语义总结
+    # 流式生成语义总结（清理空白行）
     for chunk in generate_semantic_compare(gemini_full_response, glm_full_response, user_input, gemini_api_key):
         semantic_full_response += chunk
+        # 清理冗余换行 + 渲染
+        cleaned_semantic = clean_extra_newlines(semantic_full_response)
+        display_semantic = cleaned_semantic.replace("\n", "<br>")
         semantic_placeholder.markdown(f"""
         <div class="semantic-card">
             <div class="semantic-content">
-                {semantic_full_response}▌
+                {display_semantic}▌
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    # 最终渲染语义总结
+    # 最终渲染语义总结（清理空白行，确保完整）
+    final_semantic = clean_extra_newlines(semantic_full_response)
+    final_display_semantic = final_semantic.replace("\n", "<br>")
     semantic_placeholder.markdown(f"""
     <div class="semantic-card">
         <div class="semantic-content">
-            {semantic_full_response}
+            {final_display_semantic}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -638,24 +687,27 @@ if user_input and st.session_state.get("api_configured", False):
     # 添加到聊天记录
     combined_response = f"""
 ### 双模型语义分析总结：
-{semantic_full_response}
+{final_semantic}
 
 ### 完整回答参考：
-- Gemini 详细分析：{gemini_full_response[:200]}...
-- 智谱GLM 详细分析：{glm_full_response[:200]}...
+- Gemini 详细分析：{final_gemini[:200]}...
+- 智谱GLM 详细分析：{final_glm[:200]}...
     """
     st.session_state.messages.append({"role": "assistant", "content": combined_response})
 
 # 清空按钮（Kimi风格）
+def clear_chat_history():
+    st.session_state.messages = [
+        {"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}
+    ]
+    st.session_state.model_responses = {}
+
 st.button(
     '🧹 清空聊天记录', 
     help="清除所有历史对话", 
     key="clear_btn",
-    on_click=lambda: st.session_state.update({
-        "messages": [{"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}],
-        "model_responses": {}
-    }),
-    # class_="clear-btn"
+    on_click=clear_chat_history,
+    class_="clear-btn"
 )
 
 # 闭合主容器
