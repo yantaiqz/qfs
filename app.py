@@ -4,39 +4,40 @@ import requests
 import json
 import datetime
 import os
+import time
 
 # -------------------------------------------------------------
-# --- 0. 页面配置和全新 CSS 注入 (取消顶部留白 + 优化样式) ---
+# --- 0. 页面配置和 CSS 注入 (取消顶部留白 + 流式适配) ---
 # -------------------------------------------------------------
 
 st.set_page_config(page_title="德国财税专家QFS", page_icon="🇩🇪", layout="wide")
 
-# 硅谷简洁风格 CSS 注入 (核心修改：取消顶部留白 + 优化对比样式)
+# 硅谷简洁风格 CSS 注入
 st.markdown("""
 <style>
-    /* 1. 彻底隐藏Streamlit默认干扰元素 */
+    /* 1. 隐藏默认元素 */
     header, [data-testid="stSidebar"], footer, .stDeployButton, [data-testid="stToolbar"] {
         display: none !important;
     }
     
-    /* 2. 全局容器调整 (核心：取消顶部所有留白) */
+    /* 2. 全局容器 (取消顶部留白) */
     .stApp {
         background-color: #f8fafc;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        padding: 0 !important;  /* 取消全局padding */
-        margin: 0 !important;   /* 取消全局margin */
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
-    /* 3. 主容器 (核心：取消顶部padding，仅保留左右和底部) */
+    /* 3. 主容器 (取消顶部padding) */
     .main-container {
         max-width: 1200px;
         width: 100%;
-        margin: 0 auto !important;  /* 取消上下margin */
-        padding: 0 24px 20px 24px !important;  /* 仅保留左右和底部padding，取消顶部 */
+        margin: 0 auto !important;
+        padding: 0 24px 20px 24px !important;
         box-sizing: border-box;
     }
 
-    /* 4. 专家背书卡片 */
+    /* 4. 专家卡片样式 */
     .expert-card {
         background-color: white;
         padding: 24px;
@@ -77,36 +78,23 @@ st.markdown("""
         align-self: center;
     }
 
-    /* 6. 专家信息文字样式 */
-    .expert-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 4px;
-    }
-    .expert-role {
-        font-size: 0.9rem;
-        color: #6b7280;
-        line-height: 1.4;
-    }
-
-    /* 7. 标题和副标题样式 (取消标题底部多余留白) */
+    /* 6. 标题样式 (最小化留白) */
     .page-title {
         font-size: clamp(2.2rem, 4vw, 3rem);
         font-weight: 800;
         color: #111827;
         line-height: 1.2;
-        margin: 16px 0 8px 0 !important;  /* 仅保留少量顶部margin，取消多余底部 */
+        margin: 16px 0 8px 0 !important;
     }
     .subtitle {
         font-size: clamp(1rem, 2vw, 1.15rem);
         color: #4b5563;
-        margin: 0 0 16px 0 !important;  /* 取消多余底部留白 */
+        margin: 0 0 16px 0 !important;
         font-weight: 400;
         line-height: 1.5;
     }
 
-    /* 8. 聊天消息气泡优化 */
+    /* 7. 聊天消息气泡 */
     [data-testid="stChatMessage"] {
         border-radius: 16px;
         padding: 0;
@@ -131,12 +119,12 @@ st.markdown("""
         height: 36px !important;
     }
 
-    /* 9. 常见问题区域样式 (取消多余顶部留白) */
+    /* 8. 常见问题区域 */
     .faq-header {
         font-size: 1.25rem;
         font-weight: 600;
         color: #1f2937;
-        margin: 24px 0 16px 0 !important;  /* 减少顶部留白 */
+        margin: 24px 0 16px 0 !important;
     }
     div.stButton > button {
         background-color: #ffffff;
@@ -157,11 +145,8 @@ st.markdown("""
         transform: translateY(-1px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
-    div.stButton > button:active {
-        transform: translateY(0);
-    }
-    
-    /* 10. 底部输入框样式 */
+
+    /* 9. 底部输入框 */
     [data-testid="stChatInput"] {
         position: fixed;
         bottom: 0;
@@ -185,37 +170,7 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* 11. 清空按钮和统计区域 */
-    .control-area {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: none !important;
-    }
-
-    /* 响应式适配 (同步取消移动端留白) */
-    @media (max-width: 768px) {
-        .main-container {
-            padding: 0 16px 20px 16px !important;
-        }
-        [data-testid="stChatInput"] {
-            padding: 16px 16px 20px 16px;
-            background: transparent !important;
-        }
-        .page-title {
-            margin: 12px 0 8px 0 !important;
-        }
-    }
-    
-    /* 12. 访问统计样式 (取消底部多余留白) */
-    .visit-stats-top {
-        color: #9ca3af;
-        font-size: 0.75rem;
-        text-align: right;
-        margin: 8px 0 8px 0 !important;  /* 最小化留白 */
-        line-height: 1;
-    }
-
-    /* 新增：双模型对比区域样式 */
+    /* 10. 双模型对比区域 */
     .model-compare-header {
         font-size: 1.3rem;
         font-weight: 700;
@@ -250,7 +205,7 @@ st.markdown("""
         white-space: pre-wrap;
     }
 
-    /* 新增：语义对比总结样式 */
+    /* 11. 语义对比区域 */
     .semantic-compare-header {
         font-size: 1.2rem;
         font-weight: 700;
@@ -264,22 +219,25 @@ st.markdown("""
         border: 1px solid #e3f2fd;
         margin-bottom: 16px;
     }
-    .semantic-title {
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 8px;
-        font-size: 1rem;
-    }
     .semantic-content {
         color: #4a5568;
         line-height: 1.6;
         font-size: 0.95rem;
     }
+
+    /* 12. 访问统计 */
+    .visit-stats-top {
+        color: #9ca3af;
+        font-size: 0.75rem;
+        text-align: right;
+        margin: 8px 0 8px 0 !important;
+        line-height: 1;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# --- 1. 常量定义、系统指令和模型配置 ---
+# --- 1. 常量定义与基础配置 ---
 # -------------------------------------------------------------
 
 USER_ICON = "👤"
@@ -306,11 +264,10 @@ SYSTEM_INSTRUCTION = """
 6. 强制免责声明：所有回复末尾强制包含免责声明。
 """
 
-# -------------------------- 2. 安全的计数器逻辑 --------------------------
+# -------------------------- 访问计数器 --------------------------
 COUNTER_FILE = "visit_stats_qfs.json"
 
 def update_daily_visits():
-    """安全更新访问量，如果出错则返回 0，绝不让程序崩溃"""
     try:
         today_str = datetime.date.today().isoformat()
         
@@ -324,7 +281,6 @@ def update_daily_visits():
             return 0
 
         data = {"date": today_str, "count": 0}
-        
         if os.path.exists(COUNTER_FILE):
             try:
                 with open(COUNTER_FILE, "r") as f:
@@ -335,13 +291,11 @@ def update_daily_visits():
                 pass 
         
         data["count"] += 1
-        
         with open(COUNTER_FILE, "w") as f:
             json.dump(data, f)
         
         st.session_state["has_counted"] = True
         return data["count"]
-        
     except Exception as e:
         return 0
 
@@ -349,53 +303,75 @@ daily_visits = update_daily_visits()
 visit_text = f"今日访问: {daily_visits}"
 
 # -------------------------------------------------------------
-# --- 新增：智谱GLM模型调用函数 ---
+# --- 2. 流式输出核心函数 ---
 # -------------------------------------------------------------
-def query_glm(prompt, api_key, model_name="glm-4"):
-    """调用智谱GLM模型"""
+
+# 2.1 Gemini 流式输出函数
+def stream_gemini_response(prompt, model):
+    """Gemini 流式输出生成器"""
+    try:
+        stream = model.generate_content(prompt, stream=True)
+        for chunk in stream:
+            if chunk.text:
+                yield chunk.text
+                time.sleep(0.05)  # 控制输出速度，避免过快
+    except Exception as e:
+        yield f"\n\n⚠️ Gemini调用失败：{str(e)[:100]}..."
+
+# 2.2 智谱GLM 流式输出函数
+def stream_glm_response(prompt, api_key, model_name="glm-4"):
+    """智谱GLM 流式输出生成器"""
     if not api_key:
-        return "请配置智谱GLM API Key"
+        yield "⚠️ 未配置智谱GLM API Key，暂无法获取该模型分析结果。"
+        return
     
     try:
-        # 智谱API接口
+        # 智谱流式API配置
         url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
         
-        # 构造请求体（添加德国财税系统指令）
         full_prompt = f"""{SYSTEM_INSTRUCTION}
-        
         用户问题：{prompt}"""
         
         data = {
             "model": model_name,
             "messages": [{"role": "user", "content": full_prompt}],
             "temperature": 0.1,
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "stream": True  # 开启流式输出
         }
         
-        # 发送请求
-        response = requests.post(url, headers=headers, json=data, timeout=30)
+        # 发送流式请求
+        response = requests.post(url, headers=headers, json=data, stream=True, timeout=30)
         response.raise_for_status()
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
-    
+        
+        # 解析流式响应
+        for line in response.iter_lines():
+            if line:
+                line = line.decode('utf-8')
+                if line.startswith('data: '):
+                    line = line[6:]
+                    if line == '[DONE]':
+                        break
+                    try:
+                        chunk = json.loads(line)
+                        if chunk.get('choices') and chunk['choices'][0].get('delta', {}).get('content'):
+                            content = chunk['choices'][0]['delta']['content']
+                            yield content
+                            time.sleep(0.05)
+                    except:
+                        continue
     except requests.exceptions.RequestException as e:
-        return f"智谱GLM调用失败: {str(e)[:100]}..."
+        yield f"\n\n⚠️ 智谱GLM调用失败：{str(e)[:100]}..."
     except Exception as e:
-        return f"智谱GLM处理失败: {str(e)[:100]}..."
+        yield f"\n\n⚠️ 智谱GLM处理失败：{str(e)[:100]}..."
 
-# -------------------------------------------------------------
-# --- 新增：语义化对比总结函数 (核心修改) ---
-# -------------------------------------------------------------
-def generate_semantic_compare(gemini_resp, glm_resp, user_question):
-    """
-    生成双模型语义层面的异同总结（非纯文字对比）
-    基于回答的核心观点、法律依据、分析逻辑、建议维度进行总结
-    """
-    # 构造语义对比提示词
+# 2.3 语义对比总结函数
+def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
+    """生成语义层面的异同总结（流式生成）"""
     compare_prompt = f"""
     请作为专业的德国财税分析专家，对比以下两个AI模型针对"{user_question}"的回答，从**语义层面**总结它们的异同：
     
@@ -406,7 +382,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question):
     4. 语言简洁、专业，符合财税咨询场景
     
     ### Gemini回答：
-    {gemini_resp[:2000]}  # 截断避免过长
+    {gemini_resp[:2000]}
     
     ### 智谱GLM回答：
     {glm_resp[:2000]}
@@ -424,18 +400,19 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question):
     结合两个模型的分析，给用户的最优行动建议
     """
     
-    # 调用Gemini生成语义总结（也可调用GLM，这里复用已有模型）
     try:
-        genai.configure(api_key=st.secrets.get("GEMINI_API_KEY"))
+        genai.configure(api_key=gemini_api_key)
         summary_model = genai.GenerativeModel(
             model_name='gemini-flash-latest',
             generation_config={"temperature": 0.1, "max_output_tokens": 1000}
         )
-        summary = summary_model.generate_content(compare_prompt).text
-        return summary
+        stream = summary_model.generate_content(compare_prompt, stream=True)
+        for chunk in stream:
+            if chunk.text:
+                yield chunk.text
+                time.sleep(0.05)
     except Exception as e:
-        # 降级处理：基础语义总结
-        return f"""
+        yield f"""
 **【核心共识】**
 - 两个模型均认可德国财税相关法规的核心适用原则
 - 均强调合规操作的重要性和风险防控的必要性
@@ -449,10 +426,10 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question):
 """
 
 # -------------------------------------------------------------
-# --- 3. 模型初始化 (新增智谱配置 + 容错) ---
+# --- 3. 模型初始化与会话状态 ---
 # -------------------------------------------------------------
 
-# 1. API Key 获取与配置（容错处理）
+# API Key 配置（容错）
 gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
 glm_api_key = st.secrets.get("GLM_API_KEY", "")
 
@@ -476,7 +453,7 @@ if not gemini_api_key:
 else:
     st.session_state["api_configured"] = True
 
-# 2. 初始化Gemini模型
+# 初始化Gemini模型
 @st.cache_resource(show_spinner="正在建立QFS的专业知识库...")
 def initialize_gemini_model():
     if not gemini_api_key:
@@ -496,7 +473,7 @@ def initialize_gemini_model():
 
 gemini_model = initialize_gemini_model()
 
-# 3. 聊天历史初始化
+# 会话状态初始化
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}
@@ -505,28 +482,26 @@ if "model_responses" not in st.session_state:
     st.session_state.model_responses = {}
 
 # -------------------------------------------------------------
-# --- 4. 主程序入口 (核心修改：语义化对比) ---
+# --- 4. 主程序入口 (流式输出核心逻辑) ---
 # -------------------------------------------------------------
 
-# 将所有内容包裹在主容器内
+# 主容器
 st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
-# === 置顶的访问统计 (最小化留白) ===
+# 访问统计
 st.markdown(f"""
 <div class="visit-stats-top">
     {visit_text}
 </div>
 """, unsafe_allow_html=True)
 
-# === 头部区域：标题 + 专家卡片 ===
+# 头部区域
 col_title, col_expert = st.columns([3, 1], gap="large")
-
-# 专家超链接目标 URL
 EXPERT_URL = "https://www.qfs-tax.de/Aboutinfo_2.html"
 
 with col_title:
     st.markdown('<h1 class="page-title">🇩🇪 德国合规QFS</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">资深税务师 / 全球跨境专家 AI 咨询服务（双模型语义对比）</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">资深税务师 / 全球跨境专家 AI 咨询服务（双模型流式输出）</div>', unsafe_allow_html=True)
 
 with col_expert:
     st.markdown(f"""
@@ -539,7 +514,7 @@ with col_expert:
     </div>
     """, unsafe_allow_html=True)
 
-# === 常见问题区域 ===
+# 常见问题
 st.markdown('<div class="faq-header">💡 常见问题快速查询</div>', unsafe_allow_html=True)
 cols = st.columns(3, gap="medium")
 
@@ -549,115 +524,149 @@ for i, question in enumerate(COMMON_LEGAL_QUESTIONS):
         if st.button(question, key=f"q_{i}"):
             prompt_from_button = question
 
-# === 核心聊天区域 ===
-# 显示历史消息 
+# 聊天区域
+# 显示历史消息
 for msg in st.session_state.messages:
     icon = USER_ICON if msg["role"] == "user" else ASSISTANT_ICON
     st.chat_message(msg["role"], avatar=icon).write(msg["content"])
 
-# 获取输入
+# 获取用户输入
 chat_input_text = st.chat_input("请输入你的合规问题...")
 user_input = prompt_from_button if prompt_from_button else chat_input_text
 
-# 处理输入
+# 处理用户输入（流式输出核心）
 if user_input and st.session_state.get("api_configured", False):
     # 显示用户消息
     st.chat_message("user", avatar=USER_ICON).write(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # 调用双模型
-    try:
-        # 1. 调用Gemini
-        with st.spinner("Gemini正在分析您的问题..."):
-            gemini_full_response = ""
-            if gemini_model:
-                for chunk in gemini_model.generate_content(user_input, stream=True):
-                    gemini_full_response += chunk.text if chunk.text else ""
-            else:
-                gemini_full_response = "Gemini模型初始化失败，请检查API Key配置"
-        
-        # 2. 调用智谱GLM
-        with st.spinner("智谱GLM正在分析您的问题..."):
-            if glm_api_key:
-                glm_full_response = query_glm(user_input, glm_api_key)
-            else:
-                glm_full_response = "⚠️ 未配置智谱GLM API Key，暂无法获取该模型分析结果。"
-        
-        # 存储双模型结果
-        st.session_state.model_responses[user_input] = {
-            "gemini": gemini_full_response,
-            "glm": glm_full_response
-        }
-        
-        # === 双模型结果分栏展示 ===
-        st.markdown('<div class="model-compare-header">🔍 双模型分析结果</div>', unsafe_allow_html=True)
-        col_gemini, col_glm = st.columns(2, gap="large")
-        
-        with col_gemini:
-            st.markdown(f"""
-            <div class="model-card">
-                <div class="model-card-header gemini-header">
-                    {GEMINI_ICON} Gemini Flash
-                </div>
-                <div class="model-card-content">
-                    {gemini_full_response}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_glm:
-            st.markdown(f"""
-            <div class="model-card">
-                <div class="model-card-header glm-header">
-                    {GLM_ICON} 智谱GLM-4
-                </div>
-                <div class="model-card-content">
-                    {glm_full_response}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # === 核心修改：语义化对比总结 (替换纯文字差异) ===
-        st.markdown('<div class="semantic-compare-header">📊 语义层面异同分析</div>', unsafe_allow_html=True)
-        with st.spinner("正在分析双模型语义差异..."):
-            semantic_summary = generate_semantic_compare(gemini_full_response, glm_full_response, user_input)
-        
-        # 展示语义总结
+    # === 1. Gemini 流式输出 ===
+    st.markdown('<div class="model-compare-header">🔍 双模型分析结果</div>', unsafe_allow_html=True)
+    col_gemini, col_glm = st.columns(2, gap="large")
+    
+    # Gemini 列
+    with col_gemini:
         st.markdown(f"""
-        <div class="semantic-card">
-            <div class="semantic-content">
-                {semantic_summary}
+        <div class="model-card">
+            <div class="model-card-header gemini-header">
+                {GEMINI_ICON} Gemini Flash (流式输出)
+            </div>
+            <div class="model-card-content" id="gemini-content">
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        # 将语义总结添加到聊天记录
-        combined_response = f"""
+        # 流式输出Gemini结果
+        gemini_placeholder = st.empty()
+        gemini_full_response = ""
+        for chunk in stream_gemini_response(user_input, gemini_model):
+            gemini_full_response += chunk
+            gemini_placeholder.markdown(f"""
+            <div class="model-card">
+                <div class="model-card-header gemini-header">
+                    {GEMINI_ICON} Gemini Flash (流式输出)
+                </div>
+                <div class="model-card-content">
+                    {gemini_full_response}▌
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # 最终渲染（移除光标）
+        gemini_placeholder.markdown(f"""
+        <div class="model-card">
+            <div class="model-card-header gemini-header">
+                {GEMINI_ICON} Gemini Flash
+            </div>
+            <div class="model-card-content">
+                {gemini_full_response}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # === 2. 智谱GLM 流式输出 ===
+    with col_glm:
+        st.markdown(f"""
+        <div class="model-card">
+            <div class="model-card-header glm-header">
+                {GLM_ICON} 智谱GLM-4 (流式输出)
+            </div>
+            <div class="model-card-content" id="glm-content">
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 流式输出GLM结果
+        glm_placeholder = st.empty()
+        glm_full_response = ""
+        for chunk in stream_glm_response(user_input, glm_api_key):
+            glm_full_response += chunk
+            glm_placeholder.markdown(f"""
+            <div class="model-card">
+                <div class="model-card-header glm-header">
+                    {GLM_ICON} 智谱GLM-4 (流式输出)
+                </div>
+                <div class="model-card-content">
+                    {glm_full_response}▌
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # 最终渲染（移除光标）
+        glm_placeholder.markdown(f"""
+        <div class="model-card">
+            <div class="model-card-header glm-header">
+                {GLM_ICON} 智谱GLM-4
+            </div>
+            <div class="model-card-content">
+                {glm_full_response}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 存储完整结果
+    st.session_state.model_responses[user_input] = {
+        "gemini": gemini_full_response,
+        "glm": glm_full_response
+    }
+    
+    # === 3. 语义对比 流式输出 ===
+    st.markdown('<div class="semantic-compare-header">📊 语义层面异同分析</div>', unsafe_allow_html=True)
+    semantic_placeholder = st.empty()
+    semantic_full_response = ""
+    
+    # 流式生成语义总结
+    for chunk in generate_semantic_compare(gemini_full_response, glm_full_response, user_input, gemini_api_key):
+        semantic_full_response += chunk
+        semantic_placeholder.markdown(f"""
+        <div class="semantic-card">
+            <div class="semantic-content">
+                {semantic_full_response}▌
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 最终渲染语义总结
+    semantic_placeholder.markdown(f"""
+    <div class="semantic-card">
+        <div class="semantic-content">
+            {semantic_full_response}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 添加到聊天记录
+    combined_response = f"""
 ### 双模型语义分析总结：
-{semantic_summary}
+{semantic_full_response}
 
 ### 完整回答参考：
 - Gemini 详细分析：{gemini_full_response[:200]}...
 - 智谱GLM 详细分析：{glm_full_response[:200]}...
-        """
-        st.session_state.messages.append({"role": "assistant", "content": combined_response})
-    
-    except Exception as e:
-        st.markdown(f"""
-    <div style="
-        background-color: #fef2f2; 
-        color: #dc2626; 
-        padding: 1rem; 
-        border-radius: 0.5rem; 
-        border-left: 4px solid #dc2626;
-        margin: 0.5rem 0;
-    ">
-        发生错误: 模型调用失败<br>
-        详细信息: {str(e)[:100]}...
-    </div>
-    """, unsafe_allow_html=True)
+    """
+    st.session_state.messages.append({"role": "assistant", "content": combined_response})
 
-# === 清空聊天记录按钮 ===
+# 清空按钮
 col_clear = st.columns([1])[0]
 with col_clear:
     if st.button('🧹 清空聊天记录', help="清除所有历史对话", key="clear_btn", 
