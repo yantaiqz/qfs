@@ -503,6 +503,7 @@ for msg in st.session_state.messages:
     </div>
     """, unsafe_allow_html=True)
 
+
 # --- 输入处理 ---
 chat_input_text = st.chat_input("请输入具体业务场景或法规问题...")
 user_input = prompt_from_button if prompt_from_button else chat_input_text
@@ -517,30 +518,30 @@ if user_input and st.session_state.get("api_configured", False):
     """, unsafe_allow_html=True)
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # 2. 占位容器
+    # 2. 占位容器 (改为自上而下)
     st.markdown('<div class="model-section-title">🔍 AI 模型交叉分析</div>', unsafe_allow_html=True)
     
-    c1, c2 = st.columns(2)
-    with c1:
-        gemini_placeholder = st.empty()
-    with c2:
-        glm_placeholder = st.empty()
-    
+    # === 移除 st.columns(2) ===
+    gemini_placeholder = st.empty() 
+    glm_placeholder = st.empty() 
     semantic_placeholder = st.empty()
 
-    # 3. 并行/串行流式生成 (为简化代码逻辑，此处用串行模拟，实际体验接近)
+    # 3. 串行流式生成 
     
-    # --- Gemini 生成 ---
+    # --- Gemini 生成 (不再使用 with c1) ---
     gemini_full = ""
-    for chunk in stream_gemini_response(user_input, gemini_model):
-        gemini_full += chunk
-        gemini_html = markdown_to_html(clean_extra_newlines(gemini_full))
-        gemini_placeholder.markdown(f"""
-        <div class="model-card">
-            <div class="model-card-header gemini-header">{GEMINI_ICON} Gemini Flash</div>
-            <div class="model-card-content">{gemini_html}<span class="blinking-cursor">|</span></div>
-        </div>
-        """, unsafe_allow_html=True)
+    # st.spinner() 是一个 Streamlit 内置的进度条，可以增强用户体验
+    with st.spinner(f"正在获取 {GEMINI_ICON} Gemini Flash 的专业分析..."):
+        for chunk in stream_gemini_response(user_input, gemini_model):
+            gemini_full += chunk
+            # 实时更新占位符，注意这里不再需要 c1/c2
+            gemini_html = markdown_to_html(clean_extra_newlines(gemini_full))
+            gemini_placeholder.markdown(f"""
+            <div class="model-card">
+                <div class="model-card-header gemini-header">{GEMINI_ICON} Gemini Flash</div>
+                <div class="model-card-content">{gemini_html}<span class="blinking-cursor">|</span></div>
+            </div>
+            """, unsafe_allow_html=True)
     
     # 完成态去除光标
     gemini_placeholder.markdown(f"""
@@ -550,18 +551,19 @@ if user_input and st.session_state.get("api_configured", False):
     </div>
     """, unsafe_allow_html=True)
 
-    # --- GLM 生成 ---
+    # --- GLM 生成 (不再使用 with c2) ---
     glm_full = ""
-    for chunk in stream_glm_response(user_input, glm_api_key):
-        glm_full += chunk
-        glm_html = markdown_to_html(clean_extra_newlines(glm_full))
-        glm_placeholder.markdown(f"""
-        <div class="model-card">
-            <div class="model-card-header glm-header">{GLM_ICON} 智谱GLM-4</div>
-            <div class="model-card-content">{glm_html}<span class="blinking-cursor">|</span></div>
-        </div>
-        """, unsafe_allow_html=True)
-        
+    with st.spinner(f"正在获取 {GLM_ICON} 智谱GLM-4 的专业分析..."):
+        for chunk in stream_glm_response(user_input, glm_api_key):
+            glm_full += chunk
+            glm_html = markdown_to_html(clean_extra_newlines(glm_full))
+            glm_placeholder.markdown(f"""
+            <div class="model-card">
+                <div class="model-card-header glm-header">{GLM_ICON} 智谱GLM-4</div>
+                <div class="model-card-content">{glm_html}<span class="blinking-cursor">|</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+            
     glm_placeholder.markdown(f"""
     <div class="model-card">
         <div class="model-card-header glm-header">{GLM_ICON} 智谱GLM-4</div>
@@ -569,7 +571,7 @@ if user_input and st.session_state.get("api_configured", False):
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 语义对比分析 ---
+    # --- 语义对比分析 (保持不变，因为它本身就是垂直排列) ---
     st.markdown('<div class="model-section-title">📊 专家综合意见 (基于双模型)</div>', unsafe_allow_html=True)
     semantic_full = ""
     for chunk in generate_semantic_compare(gemini_full, glm_full, user_input, gemini_api_key):
