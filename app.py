@@ -830,7 +830,7 @@ st.button(
     help="清除所有历史对话", 
     key="clear_btn",
     on_click=clear_chat_history,
-    class_="clear-btn"
+    
 )
 st.markdown('</div>', unsafe_allow_html=True)
 
