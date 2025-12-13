@@ -1,6 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
-from volcengine.ark import Ark
+import requests  # 智谱API使用HTTP请求
 import os
 import difflib
 import time
@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # --- CSS样式：打造 Kimi 风格极简界面 ---
-# 使用素雅的配色、大圆角、隐藏多余的 Streamlit 元素
+# 调整智谱相关配色和图标
 st.markdown("""
 <style>
     /* 全局字体和背景 */
@@ -94,8 +94,14 @@ with st.sidebar:
     st.info("请输入您的 API Key 以开始使用。")
     
     gemini_key = st.text_input("Gemini API Key", type="password")
-    doubao_key = st.text_input("Doubao (Ark) API Key", type="password")
-    doubao_ep = st.text_input("Doubao Endpoint ID", placeholder="ep-202xxx...", help="火山引擎在线推理的接入点ID")
+    # 替换豆包配置为智谱配置
+    glm_key = st.text_input("智谱 GLM API Key", type="password", help="从智谱开放平台获取：https://open.bigmodel.cn/")
+    glm_model = st.selectbox(
+        "智谱模型选择",
+        options=["glm-4", "glm-4v", "glm-3-turbo"],
+        index=0,
+        help="选择要调用的智谱模型版本"
+    )
     
     st.markdown("---")
     use_mock = st.checkbox("使用模拟模式 (无 Key 体验)", value=True, help="如果没有API Key，勾选此项查看界面效果")
@@ -115,19 +121,33 @@ def query_gemini(prompt, api_key):
     except Exception as e:
         return f"Gemini 调用失败: {str(e)}"
 
-def query_doubao(prompt, api_key, endpoint_id):
-    """调用字节跳动豆包 (Volcengine Ark) 模型"""
-    if not api_key or not endpoint_id: return "请配置豆包 API Key 和 Endpoint"
+def query_glm(prompt, api_key, model_name):
+    """调用智谱 GLM 模型（替换原豆包调用逻辑）"""
+    if not api_key: return "请配置智谱 GLM API Key"
     try:
-        client = Ark(api_key=api_key)
+        # 智谱API接口地址
+        url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+        # 构造请求体
         full_prompt = f"你是一名资深的中国律师。请针对以下问题提供法律咨询意见，确保引用法条准确，逻辑清晰。\n\n用户问题：{prompt}"
-        completion = client.chat.completions.create(
-            model=endpoint_id,
-            messages=[{"role": "user", "content": full_prompt}],
-        )
-        return completion.choices[0].message.content
+        data = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": full_prompt}],
+            "temperature": 0.7,  # 可控随机性
+            "max_tokens": 2048   # 最大生成长度
+        }
+        # 发送请求
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        response.raise_for_status()  # 抛出HTTP错误
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    except requests.exceptions.RequestException as e:
+        return f"智谱 GLM 调用失败: {str(e)}"
     except Exception as e:
-        return f"豆包调用失败: {str(e)}"
+        return f"智谱 GLM 处理失败: {str(e)}"
 
 def mock_response(model_name, query):
     """模拟返回结果 (用于演示 UI)"""
@@ -136,7 +156,7 @@ def mock_response(model_name, query):
     if model_name == "Gemini":
         return base + "根据《中华人民共和国民法典》第五百七十七条，当事人一方不履行合同义务或者履行合同义务不符合约定的，应当承担继续履行、采取补救措施或者赔偿损失等违约责任。建议您首先保留证据，包括合同原件、聊天记录等。"
     else:
-        return base + "依据《民法典》相关规定，违约方需承担责任。建议优先协商解决。若协商不成，可依据合同约定向人民法院提起诉讼或申请仲裁。注意诉讼时效问题，一般为三年。"
+        return base + "依据《民法典》第五百七十七条及第五百八十四条相关规定，违约方需赔偿守约方的实际损失，包括合同履行后可获得的利益，但不得超过违约方订立合同时预见到或者应当预见到的因违约可能造成的损失。建议优先协商，协商不成可诉讼，注意3年诉讼时效。"
 
 def generate_diff_html(text1, text2):
     """
@@ -154,7 +174,7 @@ def generate_diff_html(text1, text2):
         elif line.startswith('- '): # Text 1 独有
             html_content += f'<div class="diff-del">Gemini: {line[2:]}</div>'
         elif line.startswith('+ '): # Text 2 独有
-            html_content += f'<div class="diff-add">Doubao: {line[2:]}</div>'
+            html_content += f'<div class="diff-add">智谱 GLM: {line[2:]}</div>'
     html_content += '</div>'
     return html_content
 
@@ -162,7 +182,7 @@ def generate_diff_html(text1, text2):
 
 # 1. 顶部区域
 st.title("⚖️ 法律智能双询")
-st.caption("同时咨询 Gemini 与 豆包，对比法律意见，辅助专业决策")
+st.caption("同时咨询 Gemini 与 智谱 GLM，对比法律意见，辅助专业决策")
 
 st.write("") # Spacer
 
@@ -174,7 +194,7 @@ with col_input:
 
 # 3. 结果区域
 if submit_btn and user_query:
-    if not use_mock and (not gemini_key or not doubao_key):
+    if not use_mock and (not gemini_key or not glm_key):
         st.error("请先在左侧侧边栏配置 API Key，或勾选“模拟模式”。")
     else:
         st.write("---")
@@ -184,12 +204,12 @@ if submit_btn and user_query:
             # 并发处理模拟 (实际生产中可以使用 asyncio 或 ThreadPoolExecutor)
             if use_mock:
                 res_gemini = mock_response("Gemini", user_query)
-                res_doubao = mock_response("Doubao", user_query)
+                res_glm = mock_response("智谱 GLM", user_query)  # 替换豆包为智谱
             else:
                 # 实际调用
                 # 简单起见这里串行调用，实际建议用并发
                 res_gemini = query_gemini(user_query, gemini_key)
-                res_doubao = query_doubao(user_query, doubao_key, doubao_ep)
+                res_glm = query_glm(user_query, glm_key, glm_model)  # 调用智谱API
 
         # 4. 双栏展示结果
         col1, col2 = st.columns(2)
@@ -214,12 +234,12 @@ if submit_btn and user_query:
             st.markdown(
                 f"""
                 <div class="result-card">
-                    <div class="model-header" style="color: #0452E8;">
-                        <span style="font-size: 20px; margin-right: 8px;">🍬</span>
-                        豆包 (Doubao)
+                    <div class="model-header" style="color: #FF6700;">  <!-- 智谱品牌色 -->
+                        <span style="font-size: 20px; margin-right: 8px;">🧠</span>
+                        智谱 GLM ({glm_model})
                     </div>
                     <div style="font-size: 0.95rem; line-height: 1.6; color: #333;">
-                        {res_doubao}
+                        {res_glm}
                     </div>
                 </div>
                 """, 
@@ -235,13 +255,13 @@ if submit_btn and user_query:
             # 在实际高级应用中，这里应该调用第三次 LLM 来总结两个回答的逻辑差异
             # 这里我们展示视觉上的差异
             
-            diff_html = generate_diff_html(res_gemini, res_doubao)
+            diff_html = generate_diff_html(res_gemini, res_glm)  # 替换豆包结果为智谱
             
             st.markdown("""
             <div style="background-color: #fff; padding: 20px; border-radius: 10px; border: 1px solid #eee;">
                 <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">
                     <span style="background-color: #ffebe9; color: #cf222e; padding: 2px 5px; border-radius: 4px;">红色</span> 代表 Gemini 独有的表述，
-                    <span style="background-color: #e6ffec; color: #248043; padding: 2px 5px; border-radius: 4px;">绿色</span> 代表 豆包 独有的表述。
+                    <span style="background-color: #e6ffec; color: #248043; padding: 2px 5px; border-radius: 4px;">绿色</span> 代表 智谱 GLM 独有的表述。
                 </p>
             """, unsafe_allow_html=True)
             
