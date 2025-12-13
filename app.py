@@ -400,7 +400,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
             model_name='gemini-flash-latest',
             generation_config={
                 "temperature": 0.1, 
-                "max_output_tokens": 1000,
+                "max_output_tokens": 2000,
                 "top_p": 0.95
             }
         )
