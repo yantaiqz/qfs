@@ -369,9 +369,9 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
     except Exception as e:
         yield f"\n\n⚠️ 智谱GLM处理失败：{str(e)[:100]}..."
 
-# 2.3 语义对比总结函数
+# 2.3 语义对比总结函数（修复timeout参数错误）
 def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
-    """生成语义层面的异同总结"""
+    """生成语义层面的异同总结（流式生成）"""
     compare_prompt = f"""
     请作为专业的德国财税分析专家，对比以下两个AI模型针对"{user_question}"的回答，从**语义层面**总结它们的异同：
     
@@ -379,55 +379,65 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     1. 相同点：总结核心法律观点、适用法条、风险判断等方面的共识
     2. 不同点：分析在分析角度、建议侧重点、法条解读深度、实操性等方面的差异
     3. 避免逐字逐句对比，聚焦核心语义和逻辑层面
-    4. 语言简洁、专业，符合财税咨询场景
+    4. 语言简洁、专业，符合财税咨询场景，每条要点不超过20字
     
     ### Gemini回答：
-    {gemini_resp[:1500]}  # 缩短截断长度，避免输入超限
+    {gemini_resp[:1500]}
     
     ### 智谱GLM回答：
     {glm_resp[:1500]}
     
-    ### 输出格式：
+    ### 输出格式（严格遵守）：
     **【核心共识】**
     - 要点1
     - 要点2
     
     **【观点差异】**
-    - Gemini：侧重xxx，分析角度xxx，建议更偏向xxx
-    - 智谱GLM：侧重xxx，分析角度xxx，建议更偏向xxx
+    - Gemini：侧重xxx，分析角度xxx
+    - 智谱GLM：侧重xxx，分析角度xxx
     
     **【综合建议】**
-    结合两个模型的分析，给用户的最优行动建议
+    结合两个模型的分析，给用户的最优行动建议（不超过50字）
     """
     
     try:
         genai.configure(api_key=gemini_api_key)
+        # 正确的模型配置（仅包含有效参数）
         summary_model = genai.GenerativeModel(
             model_name='gemini-flash-latest',
-            generation_config={"temperature": 0.1, "max_output_tokens": 1000, "timeout": 60}  # 延长超时时间
+            generation_config={
+                "temperature": 0.1,
+                "max_output_tokens": 1000,
+                "top_p": 0.95
+            }
         )
-        stream = summary_model.generate_content(compare_prompt, stream=True)
+        # timeout作为generate_content的参数传入
+        stream = summary_model.generate_content(
+            compare_prompt,
+            stream=True,
+            timeout=60  # 正确的超时参数位置
+        )
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.02)  # 缩短等待时间，减少超时概率
+                time.sleep(0.02)
     except Exception as e:
-        # 新增：打印错误日志（Streamlit控制台可查看）
-        st.error(f"语义总结生成失败：{str(e)}")  # 前端显示错误
-        print(f"语义总结错误详情：{e}")  # 终端打印错误
-        # 降级返回通用模板
+        # 精准提示错误+个性化降级模板
+        st.error(f"语义总结生成失败：{str(e)}")
+        print(f"语义总结错误详情：{e}")
         yield f"""
 **【核心共识】**
-- 两个模型均认可德国财税相关法规对"{user_question}"的核心适用原则
-- 均强调该场景下合规操作的重要性和风险防控的必要性
+- 均认可{user_question}相关德国财税法规的核心原则
+- 均强调该场景下合规操作和风险防控的必要性
 
 **【观点差异】**
-- Gemini：更侧重"{user_question}"相关法条的字面解读和国际通用性分析
-- 智谱GLM：更侧重中国企业在"{user_question}"场景下的实操落地和本土化建议
+- Gemini：侧重{user_question}法条的字面解读与国际通用性
+- 智谱GLM：侧重{user_question}的实操落地与本土化建议
 
 **【综合建议】**
-针对"{user_question}"问题，建议结合两个模型的分析，既关注德国法条的合规性要求，也兼顾中国企业出海的实际操作场景。
+针对{user_question}，兼顾德国法条合规性与中企实操落地需求
 """
+
 # -------------------------------------------------------------
 # --- 3. 模型初始化与会话状态 ---
 # -------------------------------------------------------------
