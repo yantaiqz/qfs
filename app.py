@@ -440,7 +440,6 @@ st.session_state["api_configured"] = bool(gemini_api_key)
 def initialize_gemini_model():
     if not gemini_api_key: return None
     return genai.GenerativeModel(
-        # model_name='gemini-1.5-flash', 
         model_name='gemini-1.5-flash', 
         system_instruction=SYSTEM_INSTRUCTION
     )
