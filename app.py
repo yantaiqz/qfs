@@ -707,7 +707,7 @@ st.button(
     help="清除所有历史对话", 
     key="clear_btn",
     on_click=clear_chat_history,
-    class_="clear-btn"
+    # class_="clear-btn"
 )
 
 # 闭合主容器
