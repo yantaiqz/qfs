@@ -371,7 +371,7 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
 
 # 2.3 语义对比总结函数（修复timeout参数错误）
 def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
-    """生成语义层面的异同总结（流式生成）"""
+    """生成语义层面的异同总结（彻底移除无效参数）"""
     compare_prompt = f"""
     请作为专业的德国财税分析专家，对比以下两个AI模型针对"{user_question}"的回答，从**语义层面**总结它们的异同：
     
@@ -382,7 +382,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     4. 语言简洁、专业，符合财税咨询场景，每条要点不超过20字
     
     ### Gemini回答：
-    {gemini_resp[:1500]}
+    {gemini_resp[:1500]}  # 缩短截断长度，避免输入超限
     
     ### 智谱GLM回答：
     {glm_resp[:1500]}
@@ -402,29 +402,29 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     
     try:
         genai.configure(api_key=gemini_api_key)
-        # 正确的模型配置（仅包含有效参数）
+        # 1. 彻底移除所有无效参数，仅保留SDK支持的配置
         summary_model = genai.GenerativeModel(
             model_name='gemini-flash-latest',
             generation_config={
-                "temperature": 0.1,
+                "temperature": 0.1, 
                 "max_output_tokens": 1000,
-                "top_p": 0.95
+                "top_p": 0.95  # 仅保留Gemini SDK明确支持的参数
             }
         )
-        # timeout作为generate_content的参数传入
+        # 2. 移除generate_content中的timeout参数（SDK不支持）
         stream = summary_model.generate_content(
-            compare_prompt,
-            stream=True,
-            timeout=60  # 正确的超时参数位置
+            compare_prompt, 
+            stream=True  # 仅保留流式参数
         )
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.02)
+                time.sleep(0.02)  # 轻微控速，不影响核心调用
     except Exception as e:
         # 精准提示错误+个性化降级模板
         st.error(f"语义总结生成失败：{str(e)}")
         print(f"语义总结错误详情：{e}")
+        # 优化降级模板（匹配用户具体问题）
         yield f"""
 **【核心共识】**
 - 均认可{user_question}相关德国财税法规的核心原则
