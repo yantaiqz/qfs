@@ -371,7 +371,7 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
 
 # 2.3 语义对比总结函数
 def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
-    """生成语义层面的异同总结（流式生成）"""
+    """生成语义层面的异同总结"""
     compare_prompt = f"""
     请作为专业的德国财税分析专家，对比以下两个AI模型针对"{user_question}"的回答，从**语义层面**总结它们的异同：
     
@@ -382,10 +382,10 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     4. 语言简洁、专业，符合财税咨询场景
     
     ### Gemini回答：
-    {gemini_resp[:2000]}
+    {gemini_resp[:1500]}  # 缩短截断长度，避免输入超限
     
     ### 智谱GLM回答：
-    {glm_resp[:2000]}
+    {glm_resp[:1500]}
     
     ### 输出格式：
     **【核心共识】**
@@ -404,27 +404,30 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
         genai.configure(api_key=gemini_api_key)
         summary_model = genai.GenerativeModel(
             model_name='gemini-flash-latest',
-            generation_config={"temperature": 0.1, "max_output_tokens": 1000}
+            generation_config={"temperature": 0.1, "max_output_tokens": 1000, "timeout": 60}  # 延长超时时间
         )
         stream = summary_model.generate_content(compare_prompt, stream=True)
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.05)
+                time.sleep(0.02)  # 缩短等待时间，减少超时概率
     except Exception as e:
+        # 新增：打印错误日志（Streamlit控制台可查看）
+        st.error(f"语义总结生成失败：{str(e)}")  # 前端显示错误
+        print(f"语义总结错误详情：{e}")  # 终端打印错误
+        # 降级返回通用模板
         yield f"""
 **【核心共识】**
-- 两个模型均认可德国财税相关法规的核心适用原则
-- 均强调合规操作的重要性和风险防控的必要性
+- 两个模型均认可德国财税相关法规对"{user_question}"的核心适用原则
+- 均强调该场景下合规操作的重要性和风险防控的必要性
 
 **【观点差异】**
-- Gemini：更侧重法条的字面解读和国际通用性分析
-- 智谱GLM：更侧重中国企业出海的实操场景和本土化建议
+- Gemini：更侧重"{user_question}"相关法条的字面解读和国际通用性分析
+- 智谱GLM：更侧重中国企业在"{user_question}"场景下的实操落地和本土化建议
 
 **【综合建议】**
-建议结合两个模型的分析，既关注法条的合规性，也兼顾中国企业的实际操作落地。
+针对"{user_question}"问题，建议结合两个模型的分析，既关注德国法条的合规性要求，也兼顾中国企业出海的实际操作场景。
 """
-
 # -------------------------------------------------------------
 # --- 3. 模型初始化与会话状态 ---
 # -------------------------------------------------------------
