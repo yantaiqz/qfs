@@ -420,7 +420,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     
     try:
         genai.configure(api_key=gemini_api_key)
-        summary_model = genai.GenerativeModel('gemini-1.5-flash')
+        summary_model = genai.GenerativeModel('gemini-2.5-flash')
         stream = summary_model.generate_content(compare_prompt, stream=True)
         for chunk in stream:
             if chunk.text:
@@ -440,7 +440,7 @@ st.session_state["api_configured"] = bool(gemini_api_key)
 def initialize_gemini_model():
     if not gemini_api_key: return None
     return genai.GenerativeModel(
-        model_name='gemini-1.5-flash', 
+        model_name='gemini-2.5-flash', 
         system_instruction=SYSTEM_INSTRUCTION
     )
 
