@@ -426,8 +426,13 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
             if chunk.text:
                 yield chunk.text
                 time.sleep(0.03)
+    
     except Exception as e:
-        yield f"**核心共识**\n- 均强调合规重要性\n\n**观点差异**\n- 分析服务暂时不可用\n\n**综合建议**\n请手动对比上方内容。"
+        # 新增的代码：显示具体的错误类型和信息
+        error_message = f"**错误！语义总结失败：**\n\n- **原因:** {type(e).__name__} \n- **详情:** {str(e)[:150]}...\n- **请检查:** API Key、付费状态或重试。"
+    
+        # 替代原始的硬编码内容
+        yield f"**核心共识**\n- 均强调合规重要性\n\n**观点差异**\n- 分析服务暂时不可用 (请查看日志)\n\n**综合建议**\n{error_message}"
 
 # -------------------------------------------------------------
 # --- 3. 初始化与状态 ---
