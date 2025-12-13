@@ -350,15 +350,30 @@ SYSTEM_INSTRUCTION = """
 # --- 2. 核心逻辑函数 ---
 # -------------------------------------------------------------
 
-def stream_gemini_response(prompt, model):
-    try:
-        stream = model.generate_content(prompt, stream=True)
-        for chunk in stream:
-            if chunk.text:
-                yield chunk.text
-                time.sleep(0.02)
-    except Exception as e:
-        yield f"⚠️ Gemini调用失败：{str(e)[:100]}..."
+def stream_gemini_response(prompt, model, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            stream = model.generate_content(prompt, stream=True)
+            for chunk in stream:
+                if chunk.text:
+                    yield chunk.text
+                    time.sleep(0.02)
+            return # 成功后退出函数
+        except Exception as e:
+            error_str = str(e)
+            if "429" in error_str or "quota" in error_str.lower():
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # 2秒, 4秒, 8秒
+                    print(f"遇到 429 错误，等待 {wait_time} 秒后重试...")
+                    time.sleep(wait_time)
+                else:
+                    # 达到最大重试次数，最终失败
+                    yield f"⚠️ Gemini调用失败 (429 Quota Exceeded)：多次重试后仍失败。{error_str[:100]}..."
+                    break # 退出循环
+            else:
+                # 其他非 429 错误，直接报告
+                yield f"⚠️ Gemini调用失败：{error_str[:100]}..."
+                break
 
 def stream_glm_response(prompt, api_key, model_name="glm-4"):
     if not api_key:
@@ -391,12 +406,12 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
                     except: continue
     except Exception as e:
         yield f"⚠️ GLM调用失败：{str(e)[:100]}..."
-
-def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
+        
+def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key, max_retries=3):
     """
-    生成格式严格的语义对比分析
+    生成格式严格的语义对比分析，并带有 429 错误重试机制。
     """
-    # 强制格式 Prompt
+    # 强制格式 Prompt (保持不变)
     compare_prompt = f"""
     作为德国财税分析专家，请对比以下两个模型针对"{user_question}"的回答，并严格按照指定格式输出语义异同分析。
 
@@ -418,21 +433,46 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     [100字左右的综合实操建议]
     """
     
-    try:
-        genai.configure(api_key=gemini_api_key)
-        summary_model = genai.GenerativeModel('gemini-2.5-flash')
-        stream = summary_model.generate_content(compare_prompt, stream=True)
-        for chunk in stream:
-            if chunk.text:
-                yield chunk.text
-                time.sleep(0.03)
-    
-    except Exception as e:
-        # 新增的代码：显示具体的错误类型和信息
-        error_message = f"**错误！语义总结失败：**\n\n- **原因:** {type(e).__name__} \n- **详情:** {str(e)[:150]}...\n- **请检查:** API Key、付费状态或重试。"
-    
-        # 替代原始的硬编码内容
-        yield f"**核心共识**\n- 均强调合规重要性\n\n**观点差异**\n- 分析服务暂时不可用 (请查看日志)\n\n**综合建议**\n{error_message}"
+    # === 新增重试循环 ===
+    for attempt in range(max_retries):
+        try:
+            genai.configure(api_key=gemini_api_key)
+            summary_model = genai.GenerativeModel('gemini-2.5-flash')
+            stream = summary_model.generate_content(compare_prompt, stream=True)
+            
+            # 如果成功获取到流，则开始流式输出并跳出重试循环
+            for chunk in stream:
+                if chunk.text:
+                    yield chunk.text
+                    time.sleep(0.03)
+            
+            # 正常完成，退出整个函数
+            return
+            
+        except Exception as e:
+            error_str = str(e)
+            
+            # --- 检查是否为 429 配额错误 ---
+            if "429" in error_str or "quota" in error_str.lower():
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # 2秒, 4秒, 8秒
+                    # 这里使用 yield 来提示用户正在重试
+                    yield f"**警告：** 遇到配额限制 (429)。等待 {wait_time} 秒后尝试第 {attempt + 2} 次重试..."
+                    time.sleep(wait_time)
+                    continue # 继续下一次循环 (重试)
+                else:
+                    # 达到最大重试次数，执行最终失败的错误处理
+                    error_message = f"**错误！语义总结失败：**\n\n- **原因:** Quota Exceeded (429)，多次重试后仍失败。 \n- **详情:** {error_str[:150]}...\n- **请检查:** API Key、付费状态或等待几分钟后重试。"
+                    yield f"**核心共识**\n- 均强调合规重要性\n\n**观点差异**\n- 分析服务暂时不可用 (请查看日志)\n\n**综合建议**\n{error_message}"
+                    return # 最终失败，退出函数
+            
+            # --- 其他非 429 错误 ---
+            else:
+                # 捕获其他非 429 错误，并输出详细信息
+                error_message = f"**错误！语义总结失败：**\n\n- **原因:** {type(e).__name__} \n- **详情:** {error_str[:150]}...\n- **请检查:** 模型名称或 API Key 权限。"
+                yield f"**核心共识**\n- 均强调合规重要性\n\n**观点差异**\n- 分析服务暂时不可用 (请查看日志)\n\n**综合建议**\n{error_message}"
+                return # 其他错误，直接退出
+
 
 # -------------------------------------------------------------
 # --- 3. 初始化与状态 ---
@@ -563,13 +603,16 @@ if user_input and st.session_state.get("api_configured", False):
                 <div class="model-card-content">{glm_html}<span class="blinking-cursor">|</span></div>
             </div>
             """, unsafe_allow_html=True)
-            
+
     glm_placeholder.markdown(f"""
     <div class="model-card">
         <div class="model-card-header glm-header">{GLM_ICON} 智谱GLM-4</div>
         <div class="model-card-content">{markdown_to_html(clean_extra_newlines(glm_full))}</div>
     </div>
     """, unsafe_allow_html=True)
+
+    # 增加短暂延迟，避免立即触发 Gemini 总结模型的 429 限制
+    time.sleep(1.5)
 
     # --- 语义对比分析 (保持不变，因为它本身就是垂直排列) ---
     st.markdown('<div class="model-section-title">📊 专家综合意见 (基于双模型)</div>', unsafe_allow_html=True)
