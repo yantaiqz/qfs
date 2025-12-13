@@ -281,21 +281,28 @@ def clean_extra_newlines(text):
 
 def markdown_to_html(text):
     """
-    将 Markdown 转为 HTML，特别针对 Legalon 风格优化标题和列表。
+    将 Markdown 转为 HTML，过滤 ### 标题，优化 Legalon 风格输出。
     """
-    lines = text.split("\n")
+    # 第一步：彻底删除所有 ### 开头的行 + 清理孤立的 ### 符号
+    lines = []
+    for line in text.split("\n"):
+        line = line.strip()
+        # 过滤 ### 标题行 + 清理行内孤立的 ###
+        if not line.startswith("###"):
+            clean_line = re.sub(r'###+', '', line)  # 删除所有###符号
+            lines.append(clean_line)
+    
     html_lines = []
     in_list = False
     
     for line in lines:
         line = line.strip()
         
-        # 处理标题 (**标题**)
+        # 处理加粗标题 (**标题**)
         if line.startswith("**") and line.endswith("**"):
             if in_list:
                 html_lines.append("</ul>")
                 in_list = False
-            # 提取标题内容并加样式
             content = line.strip("*")
             html_lines.append(f"<div style='color: #003567; font-weight: 700; margin-top: 16px; margin-bottom: 8px; font-size: 1rem;'>{content}</div>")
             
@@ -305,7 +312,6 @@ def markdown_to_html(text):
                 html_lines.append("<ul style='margin: 0 0 16px 20px; padding: 0;'>")
                 in_list = True
             content = line[2:].strip()
-            # 处理列表内的加粗
             content = re.sub(r'\*\*(.*?)\*\*', r'<span style="color:#0056b3; font-weight:600;">\1</span>', content)
             html_lines.append(f"<li style='margin-bottom: 6px;'>{content}</li>")
             
@@ -314,7 +320,6 @@ def markdown_to_html(text):
             if in_list:
                 html_lines.append("</ul>")
                 in_list = False
-            # 处理段落内的加粗
             line = re.sub(r'\*\*(.*?)\*\*', r'<span style="color:#0056b3; font-weight:600;">\1</span>', line)
             html_lines.append(f"<p style='margin-bottom: 10px;'>{line}</p>")
             
@@ -411,15 +416,15 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     """
     生成格式严格的语义对比分析，并带有 429 错误重试机制。
     """
-    # 强制格式 Prompt (保持不变)
+    # 关键修复：移除 Prompt 中的 ### 标题，改用普通文本
     compare_prompt = f"""
     作为德国财税分析专家，请对比以下两个模型针对"{user_question}"的回答，并严格按照指定格式输出语义异同分析。
 
-    ### 待分析内容：
+    待分析内容：
     [Gemini]: {gemini_resp[:1500]}
     [GLM]: {glm_resp[:1500]}
 
-    ### 必须严格遵守的输出格式（不要包含Markdown代码块符号）：
+    必须严格遵守的输出格式（不要包含Markdown代码块符号，不要使用###标题）：
 
     **核心共识**
     - [共识点1]
@@ -432,7 +437,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     **综合建议**
     [100字左右的综合实操建议]
     """
-    
+      
     # === 新增重试循环 ===
     for attempt in range(max_retries):
         try:
