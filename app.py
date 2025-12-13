@@ -8,7 +8,7 @@ import time
 import re
 
 # -------------------------------------------------------------
-# --- 0. 页面配置和 CSS 注入 (1:1 模仿 Moonshot Kimi 风格) ---
+# --- 0. 页面配置和 CSS 注入 (Kimi 风格 + Markdown 渲染优化) ---
 # -------------------------------------------------------------
 
 st.set_page_config(
@@ -18,10 +18,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Moonshot Kimi 风格核心 CSS（极简、高级灰、无多余装饰）
+# Moonshot Kimi 风格核心 CSS + Markdown 渲染样式
 st.markdown("""
 <style>
-    /* 1. 全局重置：彻底移除所有默认边距/空白 */
+    /* 1. 全局重置 */
     * {
         margin: 0;
         padding: 0;
@@ -30,48 +30,47 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .stApp {
         padding: 0 !important;
         margin: 0 !important;
-        background-color: #ffffff !important; /* Kimi 纯白背景 */
+        background-color: #ffffff !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
 
-    /* 2. 隐藏所有 Streamlit 默认元素 */
+    /* 2. 隐藏默认元素 */
     header, [data-testid="stSidebar"], footer, .stDeployButton, [data-testid="stToolbar"],
     [data-testid="stDecoration"], [data-testid="stStatusWidget"], [data-testid="stHeader"] {
         display: none !important;
     }
 
-    /* 3. 主容器：Kimi 居中窄布局 */
+    /* 3. 主容器 */
     .main-container {
-        max-width: 800px !important; /* Kimi 窄版布局，聚焦内容 */
+        max-width: 800px !important;
         width: 100% !important;
         margin: 0 auto !important;
-        padding: 20px 24px 90px 24px !important; /* 底部留空给输入框 */
+        padding: 20px 24px 90px 24px !important;
     }
 
-    /* 4. 标题区域：Kimi 极简风格 */
+    /* 4. 标题区域 */
     .page-title {
         font-size: 1.8rem !important;
         font-weight: 600 !important;
-        color: #1a1a1a !important; /* Kimi 深灰文字 */
+        color: #1a1a1a !important;
         margin: 0 0 8px 0 !important;
         line-height: 1.4 !important;
     }
     .subtitle {
         font-size: 0.9rem !important;
-        color: #666666 !important; /* Kimi 浅灰副标题 */
+        color: #666666 !important;
         margin: 0 0 32px 0 !important;
         font-weight: 400 !important;
     }
 
-    /* 5. 聊天消息气泡：完全模仿 Kimi */
+    /* 5. 聊天消息气泡 */
     [data-testid="stChatMessage"] {
         margin-bottom: 12px !important;
         padding: 0 !important;
         max-width: 100% !important;
     }
-    /* 用户消息（Kimi 蓝色气泡） */
     [data-testid="stChatMessage"][data-role="user"] > div:nth-child(2) {
-        background-color: #0f7bff !important; /* Kimi 品牌蓝 */
+        background-color: #0f7bff !important;
         color: white !important;
         border-radius: 16px 16px 4px 16px !important;
         padding: 14px 20px !important;
@@ -80,9 +79,8 @@ st.markdown("""
         font-size: 0.95rem !important;
         line-height: 1.6 !important;
     }
-    /* 助手消息（Kimi 浅灰气泡） */
     [data-testid="stChatMessage"][data-role="assistant"] > div:nth-child(2) {
-        background-color: #f5f7fa !important; /* Kimi 助手气泡灰 */
+        background-color: #f5f7fa !important;
         border: none !important;
         border-radius: 16px 16px 16px 4px !important;
         padding: 14px 20px !important;
@@ -92,7 +90,6 @@ st.markdown("""
         line-height: 1.6 !important;
         color: #1a1a1a !important;
     }
-    /* 头像样式（Kimi 圆形小头像） */
     [data-testid="stChatMessage"] img {
         width: 32px !important;
         height: 32px !important;
@@ -100,7 +97,7 @@ st.markdown("""
         object-fit: cover !important;
     }
 
-    /* 6. 常见问题按钮：Kimi 扁平风格 */
+    /* 6. 常见问题按钮 */
     .faq-header {
         font-size: 0.95rem !important;
         font-weight: 600 !important;
@@ -108,7 +105,7 @@ st.markdown("""
         margin: 24px 0 16px 0 !important;
     }
     div.stButton > button {
-        background-color: #f5f7fa !important; /* Kimi 按钮灰 */
+        background-color: #f5f7fa !important;
         color: #1a1a1a !important;
         border: none !important;
         border-radius: 12px !important;
@@ -119,15 +116,15 @@ st.markdown("""
         transition: all 0.2s ease !important;
         box-shadow: none !important;
         margin-bottom: 10px !important;
-        text-align: left !important; /* Kimi 按钮文字左对齐 */
+        text-align: left !important;
     }
     div.stButton > button:hover {
-        background-color: #ebeef5 !important; /* Kimi 按钮hover灰 */
-        color: #0f7bff !important; /* Kimi  hover 蓝色文字 */
+        background-color: #ebeef5 !important;
+        color: #0f7bff !important;
         transform: none !important;
     }
 
-    /* 7. 底部输入框：完全模仿 Kimi 固定底部样式 */
+    /* 7. 底部输入框 */
     [data-testid="stChatInput"] {
         position: fixed !important;
         bottom: 0 !important;
@@ -135,46 +132,46 @@ st.markdown("""
         right: 0 !important;
         background: white !important;
         padding: 16px 0 !important;
-        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05) !important; /* Kimi 轻微底阴影 */
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05) !important;
         z-index: 999 !important;
         max-width: 800px !important;
         margin: 0 auto !important;
         width: 100% !important;
-        border-top: 1px solid #f0f2f5 !important; /* Kimi 顶部细线 */
+        border-top: 1px solid #f0f2f5 !important;
     }
     [data-testid="stChatInput"] textarea {
-        border-radius: 16px !important; /* Kimi 圆角输入框 */
-        border: 1px solid #e5e9f2 !important; /* Kimi 输入框边框 */
+        border-radius: 16px !important;
+        border: 1px solid #e5e9f2 !important;
         padding: 16px 20px !important;
         font-size: 0.95rem !important;
-        background-color: #fafbfc !important; /* Kimi 输入框背景 */
+        background-color: #fafbfc !important;
         box-shadow: none !important;
-        height: 60px !important; /* Kimi 固定输入框高度 */
+        height: 60px !important;
         resize: none !important;
     }
     [data-testid="stChatInput"] textarea:focus {
-        border-color: #0f7bff !important; /* Kimi 聚焦蓝色边框 */
+        border-color: #0f7bff !important;
         background-color: white !important;
-        box-shadow: 0 0 0 2px rgba(15, 123, 255, 0.1) !important; /* Kimi 聚焦光晕 */
+        box-shadow: 0 0 0 2px rgba(15, 123, 255, 0.1) !important;
         outline: none !important;
     }
 
-    /* 8. 模型结果卡片：Kimi 极简卡片风格 */
+    /* 8. 模型结果卡片 */
     .model-compare-header {
         font-size: 1.05rem !important;
         font-weight: 600 !important;
         color: #1a1a1a !important;
         margin: 32px 0 16px 0 !important;
         padding-bottom: 8px !important;
-        border-bottom: 1px solid #f0f2f5 !important; /* Kimi 分隔线 */
+        border-bottom: 1px solid #f0f2f5 !important;
     }
     .model-card {
-        background-color: #fafbfc !important; /* Kimi 卡片背景 */
+        background-color: #fafbfc !important;
         padding: 20px !important;
-        border-radius: 16px !important; /* Kimi 大圆角 */
-        border: 1px solid #f0f2f5 !important; /* Kimi 卡片边框 */
+        border-radius: 16px !important;
+        border: 1px solid #f0f2f5 !important;
         box-shadow: none !important;
-        margin-bottom: 20px !important; /* 上下卡片间距 */
+        margin-bottom: 20px !important;
     }
     .model-card-header {
         font-size: 0.95rem !important;
@@ -185,19 +182,22 @@ st.markdown("""
         color: #1a1a1a !important;
     }
     .gemini-header {
-        color: #4285f4 !important; /* Google 蓝 */
+        color: #4285f4 !important;
     }
     .glm-header {
-        color: #ff6700 !important; /* 智谱橙 */
+        color: #ff6700 !important;
     }
     .model-card-content {
         font-size: 0.95rem !important;
-        line-height: 1.6 !important; /* Kimi 行高 */
+        line-height: 1.6 !important;
         color: #1a1a1a !important;
         white-space: pre-wrap !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow-x: hidden !important;
     }
 
-    /* 9. 语义总结卡片：Kimi 浅蓝色风格 */
+    /* 9. 语义总结卡片 + Markdown 渲染样式 */
     .semantic-compare-header {
         font-size: 1.05rem !important;
         font-weight: 600 !important;
@@ -207,10 +207,10 @@ st.markdown("""
         border-bottom: 1px solid #f0f2f5 !important;
     }
     .semantic-card {
-        background-color: #e8f3ff !important; /* Kimi 浅蓝色背景 */
+        background-color: #e8f3ff !important;
         padding: 20px !important;
         border-radius: 16px !important;
-        border: 1px solid #d1e7ff !important; /* Kimi 蓝色边框 */
+        border: 1px solid #d1e7ff !important;
         box-shadow: none !important;
         margin-bottom: 16px !important;
     }
@@ -218,8 +218,26 @@ st.markdown("""
         color: #1a1a1a !important;
         line-height: 1.6 !important;
         font-size: 0.95rem !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow-x: hidden !important;
     }
-    /* 解决空白行：Kimi 紧凑排版 */
+    /* 关键：Markdown 列表样式（Kimi 风格） */
+    ul {
+        margin: 8px 0 16px 20px !important;
+        padding: 0 !important;
+    }
+    li {
+        margin: 6px 0 !important;
+        line-height: 1.6 !important;
+        color: #1a1a1a !important;
+    }
+    /* Markdown 加粗样式（Kimi 蓝色强调） */
+    strong {
+        color: #0f7bff !important;
+        font-weight: 600 !important;
+    }
+    /* 解决空白行 */
     .semantic-content br, .model-card-content br {
         line-height: 1.4 !important;
         margin: 1px 0 !important;
@@ -229,7 +247,7 @@ st.markdown("""
         padding: 0 !important;
     }
 
-    /* 10. 清空按钮：Kimi 次要按钮风格 */
+    /* 10. 清空按钮 */
     .clear-btn {
         background-color: #f5f7fa !important;
         color: #666666 !important;
@@ -246,7 +264,7 @@ st.markdown("""
         color: #0f7bff !important;
     }
 
-    /* 11. 加载中光标（Kimi 风格） */
+    /* 11. 加载光标 */
     @keyframes blink {
         0%, 100% { opacity: 1; }
         50% { opacity: 0; }
@@ -259,10 +277,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# --- 工具函数：清理冗余换行/空格 ---
+# --- 工具函数：Markdown 渲染 + 冗余清理 ---
 # -------------------------------------------------------------
 def clean_extra_newlines(text):
-    """合并连续换行符为单个，清理冗余空格/制表符，保留结构"""
+    """清理冗余换行/空格"""
     cleaned = re.sub(r'\n{2,}', '\n', text)
     cleaned = re.sub(r'　+', '', cleaned)
     cleaned = re.sub(r'\t+', '', cleaned)
@@ -270,13 +288,57 @@ def clean_extra_newlines(text):
     cleaned = re.sub(r'\n+(- )', '\n- ', cleaned)
     return cleaned
 
+def complete_markdown_syntax(text):
+    """补全未闭合的 Markdown 语法"""
+    # 补全加粗 **
+    bold_count = text.count("**")
+    if bold_count % 2 != 0:
+        text += "**"
+    # 补全代码块 `
+    code_count = text.count("`")
+    if code_count % 2 != 0:
+        text += "`"
+    # 补全列表
+    if text.endswith("- "):
+        text += "未完成的要点"
+    return text
+
+def markdown_to_html(text):
+    """将 Markdown 转为可渲染的 HTML"""
+    text = complete_markdown_syntax(text)
+    # 替换加粗
+    text = text.replace("**", "<strong>")
+    # 处理列表
+    lines = text.split("\n")
+    html_lines = []
+    in_list = False
+    for line in lines:
+        line = line.strip()
+        if line.startswith("- "):
+            if not in_list:
+                html_lines.append("<ul>")
+                in_list = True
+            item = line[2:].strip()
+            html_lines.append(f"<li>{item}</li>")
+        else:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            if line.startswith("**") and line.endswith("**"):
+                html_lines.append(f"<p><strong>{line.strip('**')}</strong></p>")
+            elif line:
+                html_lines.append(f"<p>{line}</p>")
+    if in_list:
+        html_lines.append("</ul>")
+    # 清理空标签
+    html = "\n".join(html_lines).replace("<p></p>", "").replace("<ul></ul>", "")
+    return html
+
 # -------------------------------------------------------------
 # --- 1. 常量定义与基础配置 ---
 # -------------------------------------------------------------
-
-# Kimi 风格头像（替换为更贴合的图标）
 USER_ICON = "👤"
-ASSISTANT_ICON = "⚖️"  # 法律相关图标
+ASSISTANT_ICON = "⚖️"
 GEMINI_ICON = "♊️"
 GLM_ICON = "🧠"
 
@@ -286,7 +348,6 @@ COMMON_LEGAL_QUESTIONS = [
     "企业在德国做重组，怎么做税务优化"
 ]
 
-# 优化后的系统指令（Kimi 风格简洁表述）
 SYSTEM_INSTRUCTION = """
 角色：德国资深税务师（20年跨境合规经验）
 服务对象：中国出海企业
@@ -304,7 +365,6 @@ COUNTER_FILE = "visit_stats_qfs.json"
 def update_daily_visits():
     try:
         today_str = datetime.date.today().isoformat()
-        
         if "has_counted" in st.session_state:
             if os.path.exists(COUNTER_FILE):
                 try:
@@ -313,7 +373,6 @@ def update_daily_visits():
                 except:
                     return 0
             return 0
-
         data = {"date": today_str, "count": 0}
         if os.path.exists(COUNTER_FILE):
             try:
@@ -323,11 +382,9 @@ def update_daily_visits():
                         data = file_data
             except:
                 pass 
-        
         data["count"] += 1
         with open(COUNTER_FILE, "w") as f:
             json.dump(data, f)
-        
         st.session_state["has_counted"] = True
         return data["count"]
     except Exception as e:
@@ -339,37 +396,29 @@ visit_text = f"今日访问: {daily_visits}"
 # -------------------------------------------------------------
 # --- 2. 流式输出核心函数 ---
 # -------------------------------------------------------------
-
-# 2.1 Gemini 流式输出函数
 def stream_gemini_response(prompt, model):
-    """Gemini 流式输出生成器（Kimi 风格排版）"""
     try:
         stream = model.generate_content(prompt, stream=True)
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.04)  # Kimi 式流畅输出速度
+                time.sleep(0.04)
     except Exception as e:
         yield f"\n\n⚠️ Gemini调用失败：{str(e)[:100]}..."
 
-# 2.2 智谱GLM 流式输出函数
 def stream_glm_response(prompt, api_key, model_name="glm-4"):
-    """智谱GLM 流式输出生成器（Kimi 风格排版）"""
     if not api_key:
         yield "⚠️ 未配置智谱GLM API Key，暂无法获取该模型分析结果。"
         return
-    
     try:
         url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
-        
         full_prompt = f"""{SYSTEM_INSTRUCTION}
 用户问题：{prompt}
 额外要求：回答结构清晰，排版简洁，单个换行分隔，无冗余空白。"""
-        
         data = {
             "model": model_name,
             "messages": [{"role": "user", "content": full_prompt}],
@@ -377,10 +426,8 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
             "max_tokens": 4096,
             "stream": True
         }
-        
         response = requests.post(url, headers=headers, json=data, stream=True, timeout=30)
         response.raise_for_status()
-        
         for line in response.iter_lines():
             if line:
                 line = line.decode('utf-8')
@@ -401,9 +448,7 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
     except Exception as e:
         yield f"\n\n⚠️ 智谱GLM处理失败：{str(e)[:100]}..."
 
-# 2.3 语义对比总结函数（Kimi 风格简洁输出）
 def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
-    """生成语义层面的异同总结（Kimi 风格简洁排版）"""
     compare_prompt = f"""
 作为德国财税分析专家，对比以下两个模型针对"{user_question}"的回答，总结语义异同：
 
@@ -431,7 +476,6 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
 **综合建议**
 xxx
 """
-    
     try:
         genai.configure(api_key=gemini_api_key)
         summary_model = genai.GenerativeModel(
@@ -467,12 +511,9 @@ xxx
 # -------------------------------------------------------------
 # --- 3. 模型初始化与会话状态 ---
 # -------------------------------------------------------------
-
-# API Key 配置（容错）
 gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
 glm_api_key = st.secrets.get("GLM_API_KEY", "")
 
-# 容错提示（Kimi 风格柔和提示）
 if not gemini_api_key:
     st.markdown(f"""
     <div style="
@@ -492,7 +533,6 @@ if not gemini_api_key:
 else:
     st.session_state["api_configured"] = True
 
-# 初始化Gemini模型
 @st.cache_resource(show_spinner="正在加载专业知识库...")
 def initialize_gemini_model():
     if not gemini_api_key:
@@ -502,7 +542,6 @@ def initialize_gemini_model():
         "temperature": 0.1,
         "top_p": 0.95
     }
-    
     model = genai.GenerativeModel(
         model_name='gemini-flash-latest', 
         system_instruction=SYSTEM_INSTRUCTION,
@@ -512,7 +551,6 @@ def initialize_gemini_model():
 
 gemini_model = initialize_gemini_model()
 
-# 会话状态初始化
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}
@@ -521,44 +559,39 @@ if "model_responses" not in st.session_state:
     st.session_state.model_responses = {}
 
 # -------------------------------------------------------------
-# --- 4. 主程序入口 (Kimi 风格 + 核心功能) ---
+# --- 4. 主程序入口 (Markdown 渲染修复) ---
 # -------------------------------------------------------------
-
-# 主容器
 st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
-# 头部区域（Kimi 极简风格）
+# 头部区域
 st.markdown('<h1 class="page-title">🇩🇪 德国合规QFS</h1>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">资深税务师 · 跨境合规专家 · AI 咨询服务</div>', unsafe_allow_html=True)
 
-# 常见问题（Kimi 风格扁平按钮）
+# 常见问题
 st.markdown('<div class="faq-header">💡 常见问题快速查询</div>', unsafe_allow_html=True)
-cols = st.columns(1)  # Kimi 单列按钮布局（更聚焦）
+cols = st.columns(1)
+prompt_from_button = None
 with cols[0]:
     for i, question in enumerate(COMMON_LEGAL_QUESTIONS):
         if st.button(question, key=f"q_{i}"):
             prompt_from_button = question
 
 # 聊天区域
-# 显示历史消息
 for msg in st.session_state.messages:
     icon = USER_ICON if msg["role"] == "user" else ASSISTANT_ICON
     st.chat_message(msg["role"], avatar=icon).write(msg["content"])
 
 # 获取用户输入
 chat_input_text = st.chat_input("请输入你的合规问题...")
-user_input = prompt_from_button if 'prompt_from_button' in locals() else chat_input_text
+user_input = prompt_from_button if prompt_from_button else chat_input_text
 
-# 处理用户输入（Kimi 风格输出）
+# 处理用户输入
 if user_input and st.session_state.get("api_configured", False):
-    # 显示用户消息
     st.chat_message("user", avatar=USER_ICON).write(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # === 1. Gemini 流式输出（上） ===
+    # === 1. Gemini 流式输出（修复 Markdown 渲染） ===
     st.markdown('<div class="model-compare-header">🔍 模型分析结果</div>', unsafe_allow_html=True)
-    
-    # Gemini 卡片
     st.markdown(f"""
     <div class="model-card">
         <div class="model-card-header gemini-header">
@@ -574,8 +607,7 @@ if user_input and st.session_state.get("api_configured", False):
     for chunk in stream_gemini_response(user_input, gemini_model):
         gemini_full_response += chunk
         cleaned_gemini = clean_extra_newlines(gemini_full_response)
-        display_gemini = cleaned_gemini.replace("\n", "<br>")
-        # Kimi 风格加载光标
+        display_gemini = markdown_to_html(cleaned_gemini)
         gemini_placeholder.markdown(f"""
         <div class="model-card">
             <div class="model-card-header gemini-header">
@@ -587,9 +619,9 @@ if user_input and st.session_state.get("api_configured", False):
         </div>
         """, unsafe_allow_html=True)
     
-    # 最终渲染Gemini
+    # 最终渲染 Gemini
     final_gemini = clean_extra_newlines(gemini_full_response)
-    final_display_gemini = final_gemini.replace("\n", "<br>")
+    final_display_gemini = markdown_to_html(final_gemini)
     gemini_placeholder.markdown(f"""
     <div class="model-card">
         <div class="model-card-header gemini-header">
@@ -601,7 +633,7 @@ if user_input and st.session_state.get("api_configured", False):
     </div>
     """, unsafe_allow_html=True)
     
-    # === 2. 智谱GLM 流式输出（下） ===
+    # === 2. 智谱 GLM 流式输出（修复 Markdown 渲染） ===
     st.markdown(f"""
     <div class="model-card">
         <div class="model-card-header glm-header">
@@ -617,7 +649,7 @@ if user_input and st.session_state.get("api_configured", False):
     for chunk in stream_glm_response(user_input, glm_api_key):
         glm_full_response += chunk
         cleaned_glm = clean_extra_newlines(glm_full_response)
-        display_glm = cleaned_glm.replace("\n", "<br>")
+        display_glm = markdown_to_html(cleaned_glm)
         glm_placeholder.markdown(f"""
         <div class="model-card">
             <div class="model-card-header glm-header">
@@ -629,9 +661,9 @@ if user_input and st.session_state.get("api_configured", False):
         </div>
         """, unsafe_allow_html=True)
     
-    # 最终渲染GLM
+    # 最终渲染 GLM
     final_glm = clean_extra_newlines(glm_full_response)
-    final_display_glm = final_glm.replace("\n", "<br>")
+    final_display_glm = markdown_to_html(final_glm)
     glm_placeholder.markdown(f"""
     <div class="model-card">
         <div class="model-card-header glm-header">
@@ -643,13 +675,13 @@ if user_input and st.session_state.get("api_configured", False):
     </div>
     """, unsafe_allow_html=True)
     
-    # 存储完整结果
+    # 存储结果
     st.session_state.model_responses[user_input] = {
         "gemini": gemini_full_response,
         "glm": glm_full_response
     }
     
-    # === 3. 语义对比 流式输出（Kimi 风格） ===
+    # === 3. 语义对比 流式输出（核心修复 Markdown 渲染） ===
     st.markdown('<div class="semantic-compare-header">📊 语义层面异同分析</div>', unsafe_allow_html=True)
     semantic_placeholder = st.empty()
     semantic_full_response = ""
@@ -657,7 +689,7 @@ if user_input and st.session_state.get("api_configured", False):
     for chunk in generate_semantic_compare(gemini_full_response, glm_full_response, user_input, gemini_api_key):
         semantic_full_response += chunk
         cleaned_semantic = clean_extra_newlines(semantic_full_response)
-        display_semantic = cleaned_semantic.replace("\n", "<br>")
+        display_semantic = markdown_to_html(cleaned_semantic)
         semantic_placeholder.markdown(f"""
         <div class="semantic-card">
             <div class="semantic-content">
@@ -668,7 +700,7 @@ if user_input and st.session_state.get("api_configured", False):
     
     # 最终渲染语义总结
     final_semantic = clean_extra_newlines(semantic_full_response)
-    final_display_semantic = final_semantic.replace("\n", "<br>")
+    final_display_semantic = markdown_to_html(final_semantic)
     semantic_placeholder.markdown(f"""
     <div class="semantic-card">
         <div class="semantic-content">
@@ -688,7 +720,7 @@ if user_input and st.session_state.get("api_configured", False):
     """
     st.session_state.messages.append({"role": "assistant", "content": combined_response})
 
-# 清空按钮（Kimi 风格次要按钮）
+# 清空按钮
 def clear_chat_history():
     st.session_state.messages = [
         {"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}
@@ -700,8 +732,7 @@ st.button(
     help="清除所有历史对话", 
     key="clear_btn",
     on_click=clear_chat_history,
-    #class_="clear-btn"
+ 
 )
 
-# 闭合主容器
 st.markdown('</div>', unsafe_allow_html=True)
