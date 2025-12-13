@@ -7,231 +7,225 @@ import os
 import time
 
 # -------------------------------------------------------------
-# --- 0. 页面配置和 CSS 注入 (取消顶部留白 + 流式适配) ---
+# --- 0. 页面配置和 CSS 注入 (Kimi风格 + 无顶部空白 + 上下排列) ---
 # -------------------------------------------------------------
 
-st.set_page_config(page_title="德国财税专家QFS", page_icon="🇩🇪", layout="wide")
+st.set_page_config(
+    page_title="德国财税专家QFS", 
+    page_icon="🇩🇪", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# 硅谷简洁风格 CSS 注入
+# Kimi风格 CSS 注入（核心优化）
 st.markdown("""
 <style>
-    /* 1. 隐藏默认元素 */
-    header, [data-testid="stSidebar"], footer, .stDeployButton, [data-testid="stToolbar"] {
+    /* 1. 彻底移除所有默认空白和边距 */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+        padding: 0 !important;
+        margin: 0 !important;
+        background-color: #f5f7fa !important;
+    }
+    
+    /* 2. 隐藏所有默认元素 */
+    header, [data-testid="stSidebar"], footer, .stDeployButton, [data-testid="stToolbar"],
+    [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
         display: none !important;
     }
     
-    /* 2. 全局容器 (取消顶部留白) */
+    /* 3. 全局样式（Kimi风格） */
     .stApp {
-        background-color: #f8fafc;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #f5f7fa !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
         padding: 0 !important;
         margin: 0 !important;
+        max-width: 100% !important;
     }
 
-    /* 3. 主容器 (取消顶部padding) */
+    /* 4. 主容器（Kimi风格居中+窄边距） */
     .main-container {
-        max-width: 1200px;
-        width: 100%;
+        max-width: 900px !important;
+        width: 100% !important;
         margin: 0 auto !important;
-        padding: 0 24px 20px 24px !important;
-        box-sizing: border-box;
+        padding: 16px 24px 80px 24px !important; /* 底部留空给输入框 */
+        box-sizing: border-box !important;
     }
 
-    /* 4. 专家卡片样式 */
-    .expert-card {
-        background-color: white;
-        padding: 24px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-        border: 1px solid #f0f0f0;
-        max-width: 300px;
-        width: 100%;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
-        transition: transform 0.3s ease;
-    }
-    .expert-card:hover {
-        transform: translateY(-4px);
-    }
-    .expert-link {
-        text-decoration: none !important;
-        color: inherit !important;
-        width: 100%;
-        display: block;
-    }
-
-    /* 5. 专家头像样式 */
-    .profile-img {
-        width: 128px;
-        height: 128px; 
-        border-radius: 50%;
-        margin-bottom: 16px;
-        border: 6px solid #ffffff; 
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        background-image: url("https://www.qfs-tax.de/public/uploads/20250614/50f3417b502ae9ce206b90e67e28a4a4.jpg"); 
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        align-self: center;
-    }
-
-    /* 6. 标题样式 (最小化留白) */
+    /* 5. 标题区域（Kimi风格） */
     .page-title {
-        font-size: clamp(2.2rem, 4vw, 3rem);
-        font-weight: 800;
-        color: #111827;
-        line-height: 1.2;
-        margin: 16px 0 8px 0 !important;
+        font-size: 2rem !important;
+        font-weight: 600 !important;
+        color: #2d3748 !important;
+        margin: 8px 0 12px 0 !important;
+        line-height: 1.3 !important;
     }
     .subtitle {
-        font-size: clamp(1rem, 2vw, 1.15rem);
-        color: #4b5563;
-        margin: 0 0 16px 0 !important;
-        font-weight: 400;
-        line-height: 1.5;
+        font-size: 0.95rem !important;
+        color: #718096 !important;
+        margin: 0 0 24px 0 !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
     }
 
-    /* 7. 聊天消息气泡 */
+    /* 6. 聊天消息气泡（Kimi风格） */
     [data-testid="stChatMessage"] {
-        border-radius: 16px;
-        padding: 0;
-        margin-bottom: 16px;
+        margin-bottom: 16px !important;
+        padding: 0 !important;
     }
     [data-testid="stChatMessage"][data-role="user"] > div:nth-child(2) {
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 18px 18px 4px 18px;
-        padding: 16px 20px;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        background-color: #4285f4 !important;
+        color: white !important;
+        border-radius: 12px 12px 4px 12px !important;
+        padding: 16px 20px !important;
+        box-shadow: 0 2px 8px rgba(66, 133, 244, 0.15) !important;
+        margin-left: 8px !important;
     }
     [data-testid="stChatMessage"][data-role="assistant"] > div:nth-child(2) {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px 18px 18px 4px;
-        padding: 16px 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        background-color: white !important;
+        border: 1px solid #e8e8e8 !important;
+        border-radius: 12px 12px 12px 4px !important;
+        padding: 16px 20px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        margin-right: 8px !important;
     }
     [data-testid="stChatMessage"] img {
         width: 36px !important;
         height: 36px !important;
+        border-radius: 50% !important;
     }
 
-    /* 8. 常见问题区域 */
+    /* 7. 常见问题按钮（Kimi风格） */
     .faq-header {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 24px 0 16px 0 !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        color: #2d3748 !important;
+        margin: 20px 0 12px 0 !important;
     }
     div.stButton > button {
-        background-color: #ffffff;
-        color: #374151;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px; 
-        font-weight: 500;
-        font-size: 0.95rem;
-        padding: 0.75rem 1.25rem;
-        width: 100%;
-        transition: all 0.2s ease;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        background-color: white !important;
+        color: #2d3748 !important;
+        border: 1px solid #e8e8e8 !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+        padding: 10px 16px !important;
+        width: 100% !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+        margin-bottom: 8px !important;
     }
     div.stButton > button:hover {
-        background-color: #f9fafb;
-        border-color: #3b82f6;
-        color: #2563eb;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background-color: #f8f9fa !important;
+        border-color: #4285f4 !important;
+        color: #4285f4 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* 9. 底部输入框 */
+    /* 8. 底部输入框（Kimi风格固定底部） */
     [data-testid="stChatInput"] {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: transparent !important;
-        padding: 16px 24px 20px 24px;
-        box-shadow: none !important;
-        z-index: 1000;
-        max-width: 1200px; 
-        margin: 0 auto;
-        width: 100%;
-        box-sizing: border-box;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: white !important;
+        padding: 12px 0 !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05) !important;
+        z-index: 999 !important;
+        max-width: 900px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        border-top: 1px solid #e8e8e8 !important;
     }
     [data-testid="stChatInput"] textarea {
-        border-radius: 12px !important;
-        border: 1px solid #e5e7eb !important;
-        padding: 12px 16px !important;
-        font-size: 1rem !important;
+        border-radius: 10px !important;
+        border: 1px solid #e8e8e8 !important;
+        padding: 14px 16px !important;
+        font-size: 0.95rem !important;
+        background-color: #fafafa !important;
+        box-shadow: none !important;
+        height: auto !important;
+    }
+    [data-testid="stChatInput"] textarea:focus {
+        border-color: #4285f4 !important;
         background-color: white !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1) !important;
     }
 
-    /* 10. 双模型对比区域 */
+    /* 9. 模型结果卡片（Kimi风格上下排列） */
     .model-compare-header {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #1f2937;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        color: #2d3748 !important;
         margin: 24px 0 16px 0 !important;
     }
     .model-card {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 16px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-        height: 100%;
+        background-color: white !important;
+        padding: 20px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e8e8e8 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        margin-bottom: 16px !important; /* 上下排列的间距 */
     }
     .model-card-header {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 12px !important;
+        display: flex !important;
+        align-items: center !important;
     }
     .gemini-header {
-        color: #4285F4;
+        color: #4285f4 !important; /* Google蓝 */
     }
     .glm-header {
-        color: #FF6700;
+        color: #ff6700 !important; /* 智谱橙 */
     }
     .model-card-content {
-        font-size: 0.95rem;
-        line-height: 1.6;
-        color: #374151;
-        white-space: pre-wrap;
+        font-size: 0.95rem !important;
+        line-height: 1.6 !important;
+        color: #2d3748 !important;
+        white-space: pre-wrap !important;
     }
 
-    /* 11. 语义对比区域 */
+    /* 10. 语义总结卡片（Kimi风格） */
     .semantic-compare-header {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #1f2937;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        color: #2d3748 !important;
         margin: 20px 0 12px 0 !important;
     }
     .semantic-card {
-        background-color: #f0f8fb;
-        padding: 20px;
-        border-radius: 16px;
-        border: 1px solid #e3f2fd;
-        margin-bottom: 16px;
+        background-color: #f0f8fb !important;
+        padding: 20px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e3f2fd !important;
+        margin-bottom: 16px !important;
     }
     .semantic-content {
-        color: #4a5568;
-        line-height: 1.6;
-        font-size: 0.95rem;
+        color: #2d3748 !important;
+        line-height: 1.6 !important;
+        font-size: 0.95rem !important;
     }
 
-    /* 12. 访问统计 */
+    /* 11. 访问统计（隐藏，简化界面） */
     .visit-stats-top {
-        color: #9ca3af;
-        font-size: 0.75rem;
-        text-align: right;
-        margin: 8px 0 8px 0 !important;
-        line-height: 1;
+        display: none !important;
+    }
+
+    /* 12. 清空按钮（Kimi风格） */
+    .clear-btn {
+        background-color: #f8f9fa !important;
+        color: #718096 !important;
+        border: 1px solid #e8e8e8 !important;
+        border-radius: 8px !important;
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+        margin-top: 8px !important;
+    }
+    .clear-btn:hover {
+        background-color: #f0f0f0 !important;
+        color: #4a5568 !important;
+        border-color: #dee2e6 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -314,7 +308,7 @@ def stream_gemini_response(prompt, model):
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.05)  # 控制输出速度，避免过快
+                time.sleep(0.05)  # 控制输出速度
     except Exception as e:
         yield f"\n\n⚠️ Gemini调用失败：{str(e)[:100]}..."
 
@@ -369,9 +363,9 @@ def stream_glm_response(prompt, api_key, model_name="glm-4"):
     except Exception as e:
         yield f"\n\n⚠️ 智谱GLM处理失败：{str(e)[:100]}..."
 
-# 2.3 语义对比总结函数（修复timeout参数错误）
+# 2.3 语义对比总结函数（修复参数错误）
 def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_key):
-    """生成语义层面的异同总结（彻底移除无效参数）"""
+    """生成语义层面的异同总结"""
     compare_prompt = f"""
     请作为专业的德国财税分析专家，对比以下两个AI模型针对"{user_question}"的回答，从**语义层面**总结它们的异同：
     
@@ -382,7 +376,7 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     4. 语言简洁、专业，符合财税咨询场景，每条要点不超过20字
     
     ### Gemini回答：
-    {gemini_resp[:1500]}  # 缩短截断长度，避免输入超限
+    {gemini_resp[:1500]}
     
     ### 智谱GLM回答：
     {glm_resp[:1500]}
@@ -402,29 +396,22 @@ def generate_semantic_compare(gemini_resp, glm_resp, user_question, gemini_api_k
     
     try:
         genai.configure(api_key=gemini_api_key)
-        # 1. 彻底移除所有无效参数，仅保留SDK支持的配置
         summary_model = genai.GenerativeModel(
             model_name='gemini-flash-latest',
             generation_config={
                 "temperature": 0.1, 
                 "max_output_tokens": 1000,
-                "top_p": 0.95  # 仅保留Gemini SDK明确支持的参数
+                "top_p": 0.95
             }
         )
-        # 2. 移除generate_content中的timeout参数（SDK不支持）
-        stream = summary_model.generate_content(
-            compare_prompt, 
-            stream=True  # 仅保留流式参数
-        )
+        stream = summary_model.generate_content(compare_prompt, stream=True)
         for chunk in stream:
             if chunk.text:
                 yield chunk.text
-                time.sleep(0.02)  # 轻微控速，不影响核心调用
+                time.sleep(0.02)
     except Exception as e:
-        # 精准提示错误+个性化降级模板
         st.error(f"语义总结生成失败：{str(e)}")
         print(f"语义总结错误详情：{e}")
-        # 优化降级模板（匹配用户具体问题）
         yield f"""
 **【核心共识】**
 - 均认可{user_question}相关德国财税法规的核心原则
@@ -455,7 +442,7 @@ if not gemini_api_key:
         padding: 1rem; 
         border-radius: 0.5rem; 
         border-left: 4px solid #dc2626;
-        margin: 0.5rem 0;
+        margin: 0.5rem 0 1rem 0;
     ">
         ⚠️ 未配置Gemini API Key<br>
         请在 /workspaces/qfs/.streamlit/secrets.toml 中添加：<br>
@@ -495,41 +482,26 @@ if "model_responses" not in st.session_state:
     st.session_state.model_responses = {}
 
 # -------------------------------------------------------------
-# --- 4. 主程序入口 (流式输出核心逻辑) ---
+# --- 4. 主程序入口 (Kimi风格 + 上下排列) ---
 # -------------------------------------------------------------
 
 # 主容器
 st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
-# 访问统计
+# 访问统计（隐藏）
 st.markdown(f"""
 <div class="visit-stats-top">
     {visit_text}
 </div>
 """, unsafe_allow_html=True)
 
-# 头部区域
-col_title, col_expert = st.columns([3, 1], gap="large")
-EXPERT_URL = "https://www.qfs-tax.de/Aboutinfo_2.html"
-
-with col_title:
-    st.markdown('<h1 class="page-title">🇩🇪 德国合规QFS</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">资深税务师 / 全球跨境专家 AI 咨询服务（双模型流式输出）</div>', unsafe_allow_html=True)
-
-with col_expert:
-    st.markdown(f"""
-    <div class="expert-card">
-        <a href="{EXPERT_URL}" class="expert-link" target="_blank">
-            <div class="profile-img" alt="乔斐·苏斯 首席合伙人"></div> 
-            <div class="expert-title">乔斐·苏斯 (Fei Qiao-Süss)</div>
-            <div class="expert-role">QFS谦帆思联合事务所 | 首席合伙人</div>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+# 头部区域（简化，贴近Kimi）
+st.markdown('<h1 class="page-title">🇩🇪 德国合规QFS</h1>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">资深税务师 / 全球跨境专家 AI 咨询服务</div>', unsafe_allow_html=True)
 
 # 常见问题
 st.markdown('<div class="faq-header">💡 常见问题快速查询</div>', unsafe_allow_html=True)
-cols = st.columns(3, gap="medium")
+cols = st.columns(3, gap="small")
 
 prompt_from_button = None
 for i, question in enumerate(COMMON_LEGAL_QUESTIONS):
@@ -547,95 +519,90 @@ for msg in st.session_state.messages:
 chat_input_text = st.chat_input("请输入你的合规问题...")
 user_input = prompt_from_button if prompt_from_button else chat_input_text
 
-# 处理用户输入（流式输出核心）
+# 处理用户输入（核心：上下排列）
 if user_input and st.session_state.get("api_configured", False):
     # 显示用户消息
     st.chat_message("user", avatar=USER_ICON).write(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # === 1. Gemini 流式输出 ===
-    st.markdown('<div class="model-compare-header">🔍 双模型分析结果</div>', unsafe_allow_html=True)
-    col_gemini, col_glm = st.columns(2, gap="large")
+    # === 1. Gemini 流式输出（上） ===
+    st.markdown('<div class="model-compare-header">🔍 模型分析结果</div>', unsafe_allow_html=True)
     
-    # Gemini 列
-    with col_gemini:
-        st.markdown(f"""
-        <div class="model-card">
-            <div class="model-card-header gemini-header">
-                {GEMINI_ICON} Gemini Flash (流式输出)
-            </div>
-            <div class="model-card-content" id="gemini-content">
-            </div>
+    # Gemini 卡片（单独一行）
+    st.markdown(f"""
+    <div class="model-card">
+        <div class="model-card-header gemini-header">
+            {GEMINI_ICON} Gemini Flash
         </div>
-        """, unsafe_allow_html=True)
-        
-        # 流式输出Gemini结果
-        gemini_placeholder = st.empty()
-        gemini_full_response = ""
-        for chunk in stream_gemini_response(user_input, gemini_model):
-            gemini_full_response += chunk
-            gemini_placeholder.markdown(f"""
-            <div class="model-card">
-                <div class="model-card-header gemini-header">
-                    {GEMINI_ICON} Gemini Flash (流式输出)
-                </div>
-                <div class="model-card-content">
-                    {gemini_full_response}▌
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # 最终渲染（移除光标）
+        <div class="model-card-content" id="gemini-content">
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    gemini_placeholder = st.empty()
+    gemini_full_response = ""
+    for chunk in stream_gemini_response(user_input, gemini_model):
+        gemini_full_response += chunk
         gemini_placeholder.markdown(f"""
         <div class="model-card">
             <div class="model-card-header gemini-header">
-                {GEMINI_ICON} Gemini Flash
+                {GEMINI_ICON} Gemini Flash (正在生成...)
             </div>
             <div class="model-card-content">
-                {gemini_full_response}
+                {gemini_full_response}▌
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    # === 2. 智谱GLM 流式输出 ===
-    with col_glm:
-        st.markdown(f"""
-        <div class="model-card">
-            <div class="model-card-header glm-header">
-                {GLM_ICON} 智谱GLM-4 (流式输出)
-            </div>
-            <div class="model-card-content" id="glm-content">
-            </div>
+    # 最终渲染Gemini
+    gemini_placeholder.markdown(f"""
+    <div class="model-card">
+        <div class="model-card-header gemini-header">
+            {GEMINI_ICON} Gemini Flash
         </div>
-        """, unsafe_allow_html=True)
-        
-        # 流式输出GLM结果
-        glm_placeholder = st.empty()
-        glm_full_response = ""
-        for chunk in stream_glm_response(user_input, glm_api_key):
-            glm_full_response += chunk
-            glm_placeholder.markdown(f"""
-            <div class="model-card">
-                <div class="model-card-header glm-header">
-                    {GLM_ICON} 智谱GLM-4 (流式输出)
-                </div>
-                <div class="model-card-content">
-                    {glm_full_response}▌
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # 最终渲染（移除光标）
+        <div class="model-card-content">
+            {gemini_full_response}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # === 2. 智谱GLM 流式输出（下） ===
+    st.markdown(f"""
+    <div class="model-card">
+        <div class="model-card-header glm-header">
+            {GLM_ICON} 智谱GLM-4
+        </div>
+        <div class="model-card-content" id="glm-content">
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    glm_placeholder = st.empty()
+    glm_full_response = ""
+    for chunk in stream_glm_response(user_input, glm_api_key):
+        glm_full_response += chunk
         glm_placeholder.markdown(f"""
         <div class="model-card">
             <div class="model-card-header glm-header">
-                {GLM_ICON} 智谱GLM-4
+                {GLM_ICON} 智谱GLM-4 (正在生成...)
             </div>
             <div class="model-card-content">
-                {glm_full_response}
+                {glm_full_response}▌
             </div>
         </div>
         """, unsafe_allow_html=True)
+    
+    # 最终渲染GLM
+    glm_placeholder.markdown(f"""
+    <div class="model-card">
+        <div class="model-card-header glm-header">
+            {GLM_ICON} 智谱GLM-4
+        </div>
+        <div class="model-card-content">
+            {glm_full_response}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # 存储完整结果
     st.session_state.model_responses[user_input] = {
@@ -679,16 +646,17 @@ if user_input and st.session_state.get("api_configured", False):
     """
     st.session_state.messages.append({"role": "assistant", "content": combined_response})
 
-# 清空按钮
-col_clear = st.columns([1])[0]
-with col_clear:
-    if st.button('🧹 清空聊天记录', help="清除所有历史对话", key="clear_btn", 
-                type="secondary"):
-        st.session_state.messages = [
-            {"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}
-        ]
-        st.session_state.model_responses = {}
-        st.rerun()
+# 清空按钮（Kimi风格）
+st.button(
+    '🧹 清空聊天记录', 
+    help="清除所有历史对话", 
+    key="clear_btn",
+    on_click=lambda: st.session_state.update({
+        "messages": [{"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}],
+        "model_responses": {}
+    }),
+    class_="clear-btn"
+)
 
 # 闭合主容器
 st.markdown('</div>', unsafe_allow_html=True)
