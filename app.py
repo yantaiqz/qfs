@@ -655,7 +655,7 @@ st.button(
         "messages": [{"role": "assistant", "content": "您好！我是您的德国财税专家QFS。请问您在中国企业出海过程中遇到了哪些财务、税务或商业资质方面的问题？"}],
         "model_responses": {}
     }),
-    class_="clear-btn"
+    # class_="clear-btn"
 )
 
 # 闭合主容器
