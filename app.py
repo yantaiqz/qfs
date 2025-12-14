@@ -655,7 +655,7 @@ import uuid  # <--- 新增导入
 import datetime
 
 # -------------------------- 配置 --------------------------
-DB_FILE = "aituzi_visit_stats.db"
+DB_FILE = "visit_stats.db"
 
 def init_db():
     """初始化数据库（包含自动修复旧表结构的功能）"""
